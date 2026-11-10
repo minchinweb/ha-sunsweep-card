@@ -3,12 +3,11 @@
     "step": {
       "user": {
         "title": "Sun Sweep",
-        "description": "Draw today's sun angles around the building outline from House Structure. Nothing else to set: the card on the dashboard chooses the sun, the moon, the times, the hour lines and the twilight."
+        "description": "Draw today's sun angles around your house. With House Structure, that house is the OpenStreetMap outline. Without it, the card draws a 10 m square. The card on the dashboard chooses the sun, the moon, the times, the hour lines and the twilight."
       }
     },
     "abort": {
       "single_instance_allowed": "Sun Sweep is already set up.",
-      "house_structure_missing": "House Structure is not set up. Add it first, so Sun Sweep has a building outline.",
       "no_outline": "House Structure has no building outline for this home yet. Set House Structure up at this home, where OpenStreetMap has the building, and try again."
     }
   }

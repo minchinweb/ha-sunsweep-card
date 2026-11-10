@@ -10,8 +10,8 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 import voluptuous as vol
 
-from .constants import OUTLINE_DATA
-from .sweep import resolve_when, snapshot
+from .constants import HOUSE_STRUCTURE, OUTLINE_DATA
+from .sweep import finish_snapshot, resolve_when
 
 
 @websocket_api.websocket_command(
@@ -25,12 +25,20 @@ from .sweep import resolve_when, snapshot
 async def ws_snapshot(hass: HomeAssistant, connection, msg: dict) -> None:
     """The sweep at a date, using the home location and the saved outline."""
 
+    installed = bool(hass.config_entries.async_entries(HOUSE_STRUCTURE))
+
     def build() -> dict:
         now = datetime.now(ZoneInfo(hass.config.time_zone))
         when = resolve_when(now, msg.get("date"), msg.get("time"))
         info = hass.data.get(OUTLINE_DATA) or {}
         points = [] if info.get("failed") else info.get("points") or []
-        return snapshot(when, hass.config.latitude, hass.config.longitude, points)
+        return finish_snapshot(
+            when,
+            hass.config.latitude,
+            hass.config.longitude,
+            points,
+            house_structure=installed,
+        )
 
     try:
         result = await hass.async_add_executor_job(build)

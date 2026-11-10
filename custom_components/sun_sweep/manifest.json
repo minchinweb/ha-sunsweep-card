@@ -4,7 +4,6 @@
   "after_dependencies": ["house_structure"],
   "codeowners": ["@minchinweb"],
   "config_flow": true,
-  "dependencies": ["house_structure"],
   "documentation": "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md",
   "integration_type": "service",
   "iot_class": "calculated",

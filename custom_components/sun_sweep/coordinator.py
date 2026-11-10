@@ -11,8 +11,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .constants import DOMAIN, OUTLINE_DATA
-from .sweep import snapshot
+from .constants import DOMAIN, HOUSE_STRUCTURE, OUTLINE_DATA
+from .sweep import finish_snapshot
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,12 +32,17 @@ class SunSweepCoordinator(DataUpdateCoordinator[dict]):
         )
 
     async def _async_update_data(self) -> dict:
-        return await self.hass.async_add_executor_job(self._read)
+        installed = bool(self.hass.config_entries.async_entries(HOUSE_STRUCTURE))
+        when = datetime.now(ZoneInfo(self.hass.config.time_zone))
+        return await self.hass.async_add_executor_job(self._read, when, installed)
 
-    def _read(self) -> dict:
+    def _read(self, when: datetime, house_structure: bool) -> dict:
         info = self.hass.data.get(OUTLINE_DATA) or {}
         points = [] if info.get("failed") else info.get("points") or []
-        when = datetime.now(ZoneInfo(self.hass.config.time_zone))
-        return snapshot(
-            when, self.hass.config.latitude, self.hass.config.longitude, points
+        return finish_snapshot(
+            when,
+            self.hass.config.latitude,
+            self.hass.config.longitude,
+            points,
+            house_structure=house_structure,
         )

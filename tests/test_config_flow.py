@@ -18,10 +18,14 @@ def _flow(hass: HomeAssistant) -> SunSweepConfigFlow:
     return flow
 
 
-async def test_house_structure_has_to_be_installed(hass: HomeAssistant) -> None:
-    result = await _flow(hass).async_step_user()
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "house_structure_missing"
+async def test_without_house_structure_the_entry_is_still_created(
+    hass: HomeAssistant,
+) -> None:
+    flow = _flow(hass)
+    result = await flow.async_step_user()
+    assert result["type"] is FlowResultType.FORM
+    result = await flow.async_step_user({})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
 async def test_an_outline_is_required(hass: HomeAssistant) -> None:

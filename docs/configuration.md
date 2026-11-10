@@ -5,19 +5,21 @@ is the page linked from the integration's help view.
 
 ## Before you start
 
-1. Install [House Structure](https://github.com/minchinweb/ha-house-structure)
-   and add it. Its first form measures your building on OpenStreetMap and
-   keeps the outline. Sun Sweep reads that outline. It does not look up the
-   building itself.
-2. Home Assistant's home location (Settings, System, General) is the place
-   both integrations use. The building has to be on OpenStreetMap at that
-   point. House Structure says so on its form when it cannot find one.
-3. Add Sun Sweep. The form has nothing to fill in. It confirms that House
-   Structure is set up and that an outline was found, then creates
+1. Home Assistant's home location (Settings, System, General) is the place
+   the sun and moon are calculated for.
+2. Add Sun Sweep. The form has nothing to fill in. It creates
    `sensor.sun_sweep`.
+3. Optional: install
+   [House Structure](https://github.com/minchinweb/ha-house-structure) and
+   add it. Its first form measures your building on OpenStreetMap and keeps
+   the outline. Sun Sweep reads that outline. It does not look up the
+   building itself. The building has to be on OpenStreetMap at your home
+   location. House Structure says so on its form when it cannot find one.
 
-If House Structure is missing, or it has no building yet, Sun Sweep stops and
-says which of those it is. Set House Structure up, then add Sun Sweep again.
+Without House Structure the card draws a 10 m square and says so underneath.
+If House Structure is installed but has not found a building yet, Sun Sweep
+stops on its form and the card says the outline is missing. Set House
+Structure up at this home, then add Sun Sweep again.
 
 ## The card
 
@@ -81,7 +83,8 @@ the sun and moon are) and does not need them copied into the card.
 ## When the picture is missing
 
 The card says **House Structure has no building outline for this home yet**
-when the outline has not been found, and **Sun Sweep is not set up** when the
-sensor is not there. A restart picks up an outline House Structure has already
+when House Structure is installed but the outline has not been found, and
+**Sun Sweep is not set up** when the sensor is not there. With no House
+Structure integration at all, the card draws the square instead. A restart picks up an outline House Structure has already
 saved. House Structure fetches again when the home coordinates change, and
 Sun Sweep reads the new ring within a minute.

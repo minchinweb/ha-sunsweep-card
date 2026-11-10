@@ -76,10 +76,15 @@ class SunSweepCard extends LitElement {
   static styles = css`
     :host { display: block; }
     svg { width: 100%; height: auto; display: block; }
-    .message {
+    .message, .note {
       padding: 16px;
       text-align: center;
       color: var(--primary-text-color);
+    }
+    .note {
+      padding-top: 0;
+      color: var(--secondary-text-color);
+      font-size: 0.85em;
     }
     text { fill: var(--primary-text-color); font-family: sans-serif; font-size: 13px; }
   `;
@@ -233,7 +238,10 @@ class SunSweepCard extends LitElement {
     } else {
       body = this._picture(attrs);
     }
-    return html`<ha-card>${body}</ha-card>`;
+    const note = attrs?.outline_fallback
+      ? html`<div class="note">House Structure is not installed, so this is a plain square.</div>`
+      : "";
+    return html`<ha-card>${body}${note}</ha-card>`;
   }
 }
 

@@ -63,6 +63,22 @@ def test_the_outline_is_centred_metres(hass: HomeAssistant) -> None:
     assert "points" not in str(sensor.extra_state_attributes["outline"])
 
 
+def test_the_coordinator_draws_a_square_until_house_structure_is_installed(
+    hass: HomeAssistant,
+) -> None:
+    _place(hass)
+    entry = MockConfigEntry(domain=DOMAIN, title="Sun Sweep", data={})
+    entry.add_to_hass(hass)
+    coordinator = SunSweepCoordinator(hass, entry)
+    when = datetime(2026, 6, 21, 9, 30, tzinfo=ZoneInfo("America/Edmonton"))
+    fallback = coordinator._read(when, False)
+    assert fallback["outline_fallback"] is True
+    assert fallback["outline"][0] == [-5.0, -5.0]
+    missing = coordinator._read(when, True)
+    assert missing["outline"] == []
+    assert "outline_fallback" not in missing
+
+
 def test_a_failed_fetch_is_the_same_as_no_building(hass: HomeAssistant) -> None:
     _place(hass)
     hass.data[OUTLINE_DATA] = {"failed": True}

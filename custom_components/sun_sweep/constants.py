@@ -7,6 +7,8 @@ DOMAIN = "sun_sweep"
 PLATFORMS = ["sensor"]
 
 # House Structure keeps the building ring here (latitude, longitude corners).
+# It is optional: without it the card draws a plain square.
+HOUSE_STRUCTURE = "house_structure"
 OUTLINE_DATA = "house_structure_outline"
 
 CARD_PATH = "/sun_sweep_static"

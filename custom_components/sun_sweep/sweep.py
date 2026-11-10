@@ -22,6 +22,9 @@ from astral.sun import azimuth, elevation, sun
 
 METRES_PER_DEGREE = 111_320.0
 
+# A 10 m square, centred, used when House Structure is not installed.
+SQUARE = ((-5.0, -5.0), (5.0, -5.0), (5.0, 5.0), (-5.0, 5.0))
+
 # What the card is looking at.
 BEFORE = "before_sunrise"
 DAY = "day"
@@ -232,6 +235,27 @@ def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> d
     return datetime(
         int(year_s), int(month_s), int(day_s), hour, minute, tzinfo=now.tzinfo
     )
+
+
+def finish_snapshot(
+    when: datetime,
+    latitude: float,
+    longitude: float,
+    points: list | None,
+    *,
+    house_structure: bool,
+) -> dict:
+    """Sensor attributes, with a square standing in when House Structure is absent.
+
+    An installed House Structure with no outline stays an empty outline, so the
+    card can say the building was not found. ``points`` are latitude/longitude
+    corners.
+    """
+    attrs = snapshot(when, latitude, longitude, points if house_structure else None)
+    if not house_structure:
+        attrs["outline"] = [list(corner) for corner in SQUARE]
+        attrs["outline_fallback"] = True
+    return attrs
 
 
 def snapshot(

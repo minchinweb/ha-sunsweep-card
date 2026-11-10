@@ -8,7 +8,8 @@
 A Home Assistant card that looks straight down on your house and draws the
 angles the sun reaches today. The building outline comes from
 [House Structure](https://github.com/minchinweb/ha-house-structure), which
-reads it from OpenStreetMap. The yellow wedge is every compass direction the
+reads it from OpenStreetMap. Without House Structure the card draws a 10 m
+square instead. The yellow wedge is every compass direction the
 sun passes while it is up. A stronger yellow runs from sunrise to where the
 sun is now. Hour lines mark each clock hour. The sun and the moon are
 two-tone discs centred on the black ring, each only while that body is above
@@ -38,8 +39,9 @@ moon is drawn only because it is still up.
 
 ## Installation
 
-House Structure has to be installed first, and it has to have found a building
-at your home position. Sun Sweep does not call OpenStreetMap itself.
+House Structure is optional. Install it when you want the real building
+instead of a 10 m square, and let it find the building at your home position
+first. Sun Sweep does not call OpenStreetMap itself.
 
 [![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=minchinweb&repository=ha-sunsweep-card&category=integration)
 

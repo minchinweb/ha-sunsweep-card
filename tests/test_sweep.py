@@ -16,6 +16,7 @@ from custom_components.sun_sweep.sweep import (
     _horizontal,
     clockwise,
     day_sweep,
+    finish_snapshot,
     moon_position,
     project_outline,
     resolve_when,
@@ -138,6 +139,17 @@ def test_a_bare_date_keeps_the_clock_time_and_a_full_one_replaces_it():
     assert pinned == datetime(2026, 1, 2, 8, 15, tzinfo=EDMONTON)
     with pytest.raises(ValueError):
         resolve_when(now, "June", None)
+
+
+def test_without_house_structure_the_outline_is_a_ten_metre_square():
+    when = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    attrs = finish_snapshot(when, LAT, LON, None, house_structure=False)
+    assert attrs["outline_fallback"] is True
+    assert attrs["outline"] == [[-5.0, -5.0], [5.0, -5.0], [5.0, 5.0], [-5.0, 5.0]]
+    ring = [(LAT, LON), (LAT, LON + 0.001), (LAT + 0.001, LON)]
+    kept = finish_snapshot(when, LAT, LON, ring, house_structure=True)
+    assert "outline_fallback" not in kept
+    assert kept["outline"]
 
 
 def test_a_missing_outline_is_an_empty_list():
