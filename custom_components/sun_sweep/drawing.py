@@ -28,6 +28,22 @@ from .constants import (
 )
 from .sweep import travel
 
+# A light edge under the black ring, so the circle still shows on a dark card.
+_RING_HALO = "#ffffff"
+_RING_HALO_WIDTH = 6
+# Letters take the theme colour, with the card colour stroked behind them so
+# they stay readable on the yellow wedge and on a dark dashboard.
+_INK = (
+    'fill="var(--primary-text-color)" '
+    'stroke="var(--ha-card-background, var(--card-background-color, #ffffff))" '
+    'stroke-width="3" paint-order="stroke"'
+)
+_TITLE = {
+    "twilight": "Civil twilight",
+    "pale": "Where the sun travels today",
+    "strong": "Sunlight already past",
+}
+
 SIZE = 320
 _RING = 128.0
 _SUN_R = 8.0
@@ -92,8 +108,8 @@ def _message(size: int, text: str) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
         f'viewBox="0 0 {size} {size}" font-family="sans-serif" font-size="14">'
-        f'<text x="{size / 2}" y="{size / 2}" text-anchor="middle" '
-        f'fill="var(--primary-text-color)">{text}</text></svg>'
+        f'<text x="{size / 2}" y="{size / 2}" text-anchor="middle" {_INK}>'
+        f"{text}</text></svg>"
     )
 
 
@@ -103,10 +119,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
     ring = _RING * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
     if flags["show_twilight"] and attrs.get("twilight_full"):
-        parts.append(
-            f'<circle id="twilight" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
-            f'fill="{TWILIGHT}" fill-opacity="{TWILIGHT_OPACITY}"/>'
-        )
+        parts.append(_filled("twilight", ring, TWILIGHT, TWILIGHT_OPACITY, size))
     elif flags["show_twilight"] and attrs.get("twilight_start") is not None:
         parts.append(
             _wedge(
@@ -121,12 +134,9 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
             )
         )
     if attrs.get("pale_full"):
+        parts.append(_filled("pale", ring, PALE, PALE_OPACITY, size))
         parts.append(
-            f'<circle id="pale" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
-            f'fill="{PALE}" fill-opacity="{PALE_OPACITY}"/>'
-        )
-        parts.append(
-            f'<circle id="rim" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
+            f'<circle id="rim" cx="{size / 2:.1f}" cy="{size / 2:.1f}" r="{ring:.1f}" '
             f'fill="none" stroke="{HOUR}" stroke-width="1.5"/>'
         )
     elif attrs.get("pale_start") is not None:
@@ -153,10 +163,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
             )
         )
     if attrs.get("strong_full"):
-        parts.append(
-            f'<circle id="strong" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
-            f'fill="{STRONG}" fill-opacity="{STRONG_OPACITY}"/>'
-        )
+        parts.append(_filled("strong", ring, STRONG, STRONG_OPACITY, size))
     elif attrs.get("strong_start") is not None:
         parts.append(
             _wedge(
@@ -183,8 +190,13 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 f'stroke="{HOUR}" stroke-width="{width}"/>'
             )
         parts.append(f'<g id="hours">{"".join(lines)}</g>')
+    mid = size / 2
     parts.append(
-        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
+        f'<circle id="ring-halo" cx="{mid:.1f}" cy="{mid:.1f}" r="{ring:.1f}" '
+        f'fill="none" stroke="{_RING_HALO}" stroke-width="{_RING_HALO_WIDTH}"/>'
+    )
+    parts.append(
+        f'<circle id="ring" cx="{mid:.1f}" cy="{mid:.1f}" r="{ring:.1f}" '
         f'fill="none" stroke="{RING}" stroke-width="3"/>'
     )
     parts.append(house[0])
@@ -199,7 +211,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
     nx, ny = point_at(0, ring - 18 * size / SIZE, size)
     parts.append(
         f'<text id="north" x="{nx:.1f}" y="{ny + 4:.1f}" text-anchor="middle" '
-        f'fill="var(--primary-text-color)">N</text>'
+        f"{_INK}>N</text>"
     )
     return parts
 
@@ -239,6 +251,15 @@ def _disc(name: str, x: float, y: float, radius: float, fill: str) -> str:
     )
 
 
+def _filled(name: str, radius: float, fill: str, opacity: float, size: int) -> str:
+    """A full disc, used when the sun never sets or twilight rings the day."""
+    mid = size / 2
+    return (
+        f'<circle id="{name}" cx="{mid:.1f}" cy="{mid:.1f}" r="{radius:.1f}" '
+        f'fill="{fill}" fill-opacity="{opacity}"><title>{_TITLE[name]}</title></circle>'
+    )
+
+
 def _wedge(name, start, end, radius, fill, opacity, size, sun_clockwise) -> str:
     span = travel(start, end, sun_clockwise)
     x1, y1 = point_at(start, radius, size)
@@ -249,7 +270,7 @@ def _wedge(name, start, end, radius, fill, opacity, size, sun_clockwise) -> str:
     return (
         f'<path id="{name}" d="M {mid:.1f} {mid:.1f} L {x1:.1f} {y1:.1f} '
         f'A {radius:.1f} {radius:.1f} 0 {large} {sweep} {x2:.1f} {y2:.1f} Z" '
-        f'fill="{fill}" fill-opacity="{opacity}"/>'
+        f'fill="{fill}" fill-opacity="{opacity}"><title>{_TITLE[name]}</title></path>'
     )
 
 
@@ -300,7 +321,7 @@ def _times(attrs: dict, size: int, rim: float, house_radius: float) -> list[str]
         )
         labels.append(
             f'<text id="{ident}" x="{x:.1f}" y="{y:.1f}" text-anchor="middle" '
-            f'dominant-baseline="{baseline}" fill="var(--primary-text-color)" '
+            f'dominant-baseline="{baseline}" {_INK} '
             f'transform="rotate({angle:.1f} {x:.1f} {y:.1f})">{text}</text>'
         )
     return labels

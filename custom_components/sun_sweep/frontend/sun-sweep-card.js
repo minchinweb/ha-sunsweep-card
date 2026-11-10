@@ -1,88 +1,26 @@
 /*
  * Sun Sweep: the house, top down, over today's sun wedge.
- * The shapes match custom_components/sun_sweep/drawing.py.
+ * The shapes are drawn by drawing.js, which matches drawing.py.
  */
-import { LitElement, css, html, svg } from "lit";
+import { LitElement, css, html } from "lit";
+import { unsafeSVG } from "lit/directives/unsafe-svg.js";
+
+import { cardSvg } from "./drawing.js";
 
 const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
-const SIZE = 320;
-const RING_R = 128;
-const PALE = "#f6d84a";
-const STRONG = "#f0b429";
-const HOUR = "#c48a12";
-const TWILIGHT = "#9aafc9";
-const RING = "#111111";
-
-const clockwise = (start, end) => (end - start + 360) % 360;
-const travel = (start, end, sunClockwise) =>
-  sunClockwise ? clockwise(start, end) : clockwise(end, start);
-
-function pointAt(azimuth, radius, size = SIZE) {
-  const mid = size / 2;
-  const turn = (azimuth * Math.PI) / 180;
-  return [mid + radius * Math.sin(turn), mid - radius * Math.cos(turn)];
-}
-
-function wedge(id, start, end, radius, fill, opacity, sunClockwise) {
-  const span = travel(start, end, sunClockwise);
-  const [x1, y1] = pointAt(start, radius);
-  const [x2, y2] = pointAt(end, radius);
-  const large = span > 180 ? 1 : 0;
-  const sweep = sunClockwise ? 1 : 0;
-  const mid = SIZE / 2;
-  const d = `M ${mid} ${mid} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${radius} ${radius} 0 ${large} ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
-  return svg`<path id=${id} d=${d} fill=${fill} fill-opacity=${opacity}></path>`;
-}
-
-function arc(start, end, radius, sunClockwise) {
-  const span = travel(start, end, sunClockwise);
-  const [x1, y1] = pointAt(start, radius);
-  const [x2, y2] = pointAt(end, radius);
-  const large = span > 180 ? 1 : 0;
-  const sweep = sunClockwise ? 1 : 0;
-  const d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${radius} ${radius} 0 ${large} ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
-  return svg`<path id="rim" d=${d} fill="none" stroke=${HOUR} stroke-width="1.5"></path>`;
-}
-
-function hourInner(time, houseRadius) {
-  const hour = Number(String(time).slice(0, 2));
-  if (hour === 12) return 0;
-  if (hour % 3 === 0) return houseRadius * 0.45;
-  return Math.min(houseRadius + 6, RING_R - 8);
-}
-
-function disc(id, x, y, radius, fill) {
-  const cx = x.toFixed(1);
-  const top = (y - radius).toFixed(1);
-  const bottom = (y + radius).toFixed(1);
-  const d = `M ${cx} ${top} A ${radius} ${radius} 0 0 1 ${cx} ${bottom} Z`;
-  return svg`<g id=${id}><circle cx=${cx} cy=${y.toFixed(1)} r=${radius} fill=${fill}></circle><path d=${d} fill="#ffffff" fill-opacity="0.5"></path></g>`;
-}
-
-function along(azimuth, houseRadius) {
-  const radius = Math.min(RING_R - 36, Math.max(houseRadius + 16, RING_R * 0.62));
-  let angle = azimuth - 90;
-  const turned = ((angle % 360) + 360) % 360;
-  if (turned > 90 && turned < 270) angle += 180;
-  const [x, y] = pointAt(azimuth, radius);
-  return [x, y, angle];
-}
-
-/** Matches drawing.label_baseline: the spoke is the baseline, letters outside. */
-function labelBaseline(azimuth, sunrise, sunClockwise) {
-  const turned = (((azimuth - 90) % 360) + 360) % 360;
-  const alphabeticIsClockwise = turned > 90 && turned < 270;
-  const outsideIsClockwise = sunrise ? !sunClockwise : sunClockwise;
-  return alphabeticIsClockwise === outsideIsClockwise ? "alphabetic" : "text-before-edge";
-}
 
 class SunSweepCard extends LitElement {
   static properties = { hass: {}, config: {}, _fixed: { state: true } };
 
   static styles = css`
     :host { display: block; }
-    svg { width: 100%; height: auto; display: block; }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      font-family: var(--ha-font-family, sans-serif);
+    }
     .message, .note {
       padding: 16px;
       text-align: center;
@@ -93,7 +31,6 @@ class SunSweepCard extends LitElement {
       color: var(--secondary-text-color);
       font-size: 0.85em;
     }
-    text { fill: var(--primary-text-color); font-family: sans-serif; font-size: 13px; }
   `;
 
   static getConfigElement() {
@@ -152,82 +89,17 @@ class SunSweepCard extends LitElement {
   }
 
   _picture(attrs) {
-    const sunClockwise = attrs.sun_clockwise !== false;
-    const parts = [];
-    if (this._on("show_twilight") && attrs.twilight_full) {
-      parts.push(svg`<circle id="twilight" cx="160" cy="160" r=${RING_R} fill=${TWILIGHT} fill-opacity="0.55"></circle>`);
-    } else if (this._on("show_twilight") && attrs.twilight_start != null) {
-      parts.push(wedge("twilight", attrs.twilight_start, attrs.twilight_end, RING_R, TWILIGHT, 0.55, sunClockwise));
-    }
-    if (attrs.pale_full) {
-      parts.push(svg`<circle id="pale" cx="160" cy="160" r=${RING_R} fill=${PALE} fill-opacity="0.35"></circle>`);
-      parts.push(svg`<circle id="rim" cx="160" cy="160" r=${RING_R} fill="none" stroke=${HOUR} stroke-width="1.5"></circle>`);
-    } else if (attrs.pale_start != null) {
-      parts.push(wedge("pale", attrs.pale_start, attrs.pale_end, RING_R, PALE, 0.35, sunClockwise));
-      parts.push(arc(attrs.pale_start, attrs.pale_end, RING_R, sunClockwise));
-    }
-    if (attrs.strong_full) {
-      parts.push(svg`<circle id="strong" cx="160" cy="160" r=${RING_R} fill=${STRONG} fill-opacity="0.72"></circle>`);
-    } else if (attrs.strong_start != null) {
-      parts.push(wedge("strong", attrs.strong_start, attrs.strong_end, RING_R, STRONG, 0.72, sunClockwise));
-    }
-    const outline = attrs.outline;
-    const easts = outline.map((p) => p[0]);
-    const norths = outline.map((p) => p[1]);
-    const span = Math.max(
-      Math.max(...easts) - Math.min(...easts),
-      Math.max(...norths) - Math.min(...norths),
-      1e-6,
-    );
-    const scale = (0.42 * 2 * RING_R) / span;
-    const house = outline.map(([east, north]) => [
-      SIZE / 2 + east * scale,
-      SIZE / 2 - north * scale,
-    ]);
-    const houseRadius = Math.max(
-      ...house.map(([x, y]) => Math.hypot(x - SIZE / 2, y - SIZE / 2)),
-    );
-    const points = house.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-    if (this._on("show_hours") && attrs.hour_azimuths?.length) {
-      const lines = attrs.hour_azimuths.map((mark) => {
-        const inner = hourInner(mark.time, houseRadius);
-        const width = Number(String(mark.time).slice(0, 2)) === 12 ? 4 : 1.5;
-        const [x1, y1] = pointAt(mark.azimuth, inner);
-        const [x2, y2] = pointAt(mark.azimuth, RING_R);
-        return svg`<line x1=${x1.toFixed(1)} y1=${y1.toFixed(1)} x2=${x2.toFixed(1)} y2=${y2.toFixed(1)} stroke=${HOUR} stroke-width=${width}></line>`;
-      });
-      parts.push(svg`<g id="hours">${lines}</g>`);
-    }
-    parts.push(svg`<circle id="ring" cx="160" cy="160" r=${RING_R} fill="none" stroke=${RING} stroke-width="3"></circle>`);
-    parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
-    if (this._on("show_sun") && attrs.sun_elevation > 0) {
-      const [x, y] = pointAt(attrs.sun_azimuth, RING_R);
-      parts.push(disc("sun", x, y, 8, "#f5c400"));
-    }
-    if (this._on("show_moon") && attrs.moon_elevation > 0) {
-      const [x, y] = pointAt(attrs.moon_azimuth, RING_R);
-      parts.push(disc("moon", x, y, 7, "#c5d0dc"));
-    }
-    if (this._on("show_times")) {
-      for (const [key, az, id] of [
-        ["sunrise", "sunrise_azimuth", "sunrise"],
-        ["sunset", "sunset_azimuth", "sunset"],
-      ]) {
-        if (!attrs[key] || attrs[az] == null) continue;
-        const [x, y, angle] = along(attrs[az], houseRadius);
-        const baseline = labelBaseline(attrs[az], id === "sunrise", sunClockwise);
-        const xf = x.toFixed(1);
-        const yf = y.toFixed(1);
-        parts.push(svg`<text id=${id} x=${xf} y=${yf} text-anchor="middle" dominant-baseline=${baseline} transform="rotate(${angle.toFixed(1)} ${xf} ${yf})">${this._clock(attrs[key])}</text>`);
-      }
-    }
-    const [nx, ny] = pointAt(0, RING_R - 18);
-    parts.push(svg`<text id="north" x=${nx.toFixed(1)} y=${(ny + 4).toFixed(1)} text-anchor="middle">N</text>`);
-    const rotation = Number(this.config?.rotation) || 0;
-    const body = rotation
-      ? svg`<g id="rotation" transform="rotate(${rotation} 160 160)">${parts}</g>`
-      : parts;
-    return svg`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}">${body}</svg>`;
+    const picture = cardSvg(attrs, {
+      show_sun: this._on("show_sun"),
+      show_times: this._on("show_times"),
+      show_moon: this._on("show_moon"),
+      show_hours: this._on("show_hours"),
+      show_twilight: this._on("show_twilight"),
+      rotation: Number(this.config?.rotation) || 0,
+      clock: (iso) => this._clock(iso),
+      embedded: true,
+    });
+    return html`${unsafeSVG(picture)}`;
   }
 
   render() {

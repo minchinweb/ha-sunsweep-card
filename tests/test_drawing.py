@@ -46,7 +46,13 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert svg.count('transform="rotate(') == 2
     assert ">N<" in svg
     assert 'id="ring"' in svg and 'stroke="#111111"' in svg
-    assert svg.index('id="hours"') < svg.index('id="ring"') < svg.index('id="house"')
+    assert 'id="ring-halo"' in svg and 'stroke="#ffffff"' in svg
+    assert "<title>Where the sun travels today</title>" in svg
+    assert "<title>Sunlight already past</title>" in svg
+    assert 'paint-order="stroke"' in svg
+    halo = svg.index('id="ring-halo"')
+    ring = svg.index('id="ring"')
+    assert svg.index('id="hours"') < halo < ring < svg.index('id="house"')
     end = point_at(313.5, 128)
     assert f"{end[0]:.1f}" in svg
     sun = point_at(SUMMER["sun_azimuth"], 128)
@@ -116,6 +122,7 @@ def test_twilight_is_drawn_under_the_day_unless_turned_off():
     wider = {**SUMMER, "twilight_start": 20.0, "twilight_end": 340.0}
     svg = card_svg(wider)
     assert svg.index('id="twilight"') < svg.index('id="pale"')
+    assert "<title>Civil twilight</title>" in svg
     hidden = card_svg(wider, {"show_twilight": False})
     assert 'id="twilight"' not in hidden
     assert 'id="pale"' in hidden

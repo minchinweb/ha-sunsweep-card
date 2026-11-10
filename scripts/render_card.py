@@ -117,7 +117,13 @@ def _write_along(image, x, y, text, angle, font, fill, *, glyphs_below: bool) ->
     side = math.ceil(half * 2)
     layer = Image.new("RGBA", (side, side))
     ImageDraw.Draw(layer).text(
-        (side / 2, side / 2), text, font=font, fill=fill, anchor=anchor
+        (side / 2, side / 2),
+        text,
+        font=font,
+        fill=fill,
+        anchor=anchor,
+        stroke_width=max(1, round(3 * image.width / 320)),
+        stroke_fill=(255, 255, 255, 255),
     )
     spun = layer.rotate(-angle, expand=True, resample=Image.Resampling.BICUBIC)
     image.alpha_composite(spun, (round(x - spun.width / 2), round(y - spun.height / 2)))
@@ -190,6 +196,11 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
             )
     draw.ellipse(
         (mid - ring, mid - ring, mid + ring, mid + ring),
+        outline=(255, 255, 255, 255),
+        width=max(6, round(6 * size / 320)),
+    )
+    draw.ellipse(
+        (mid - ring, mid - ring, mid + ring, mid + ring),
         outline=RING,
         width=max(3, round(3 * size / 320)),
     )
@@ -226,7 +237,15 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
             glyphs_below=baseline == "text-before-edge",
         )
     nx, ny = point_at(0, ring - 18 * size / 320, size)
-    draw.text((nx, ny + 4 * size / 320), "N", font=font, fill=INK, anchor="mm")
+    draw.text(
+        (nx, ny + 4 * size / 320),
+        "N",
+        font=font,
+        fill=INK,
+        anchor="mm",
+        stroke_width=max(1, round(3 * size / 320)),
+        stroke_fill=(255, 255, 255, 255),
+    )
     rotation = float((options or {}).get("rotation") or 0)
     if rotation:
         image = image.rotate(
@@ -257,7 +276,14 @@ def main() -> None:
             attrs = finish_snapshot(when, LAT, LON, None, house_structure=False)
         else:
             attrs = snapshot(when, LAT, LON, outline)
-        svg = card_svg(attrs, options).replace("var(--primary-text-color)", "#3d4a57")
+        svg = (
+            card_svg(attrs, options)
+            .replace("var(--primary-text-color)", "#3d4a57")
+            .replace(
+                "var(--ha-card-background, var(--card-background-color, #ffffff))",
+                "#ffffff",
+            )
+        )
         (OUT / f"{name}.svg").write_text(svg, encoding="utf-8")
         paint(attrs, options=options).save(OUT / f"{name}.png")
         print(
