@@ -2,7 +2,7 @@
  * Sun Sweep: the house, top down, over today's sun wedge.
  * The shapes are drawn by drawing.js, which matches drawing.py.
  */
-import { LitElement, css, html } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 
 import { cardSvg } from "./drawing.js";
@@ -35,6 +35,11 @@ class SunSweepCard extends LitElement {
       padding-top: 0;
       color: var(--secondary-text-color);
       font-size: 0.85em;
+    }
+    .actionable { cursor: pointer; }
+    .actionable:focus-visible {
+      outline: 2px solid var(--primary-color, #03a9f4);
+      outline-offset: 2px;
     }
   `;
 
@@ -179,7 +184,73 @@ class SunSweepCard extends LitElement {
       clock: (iso) => this._clock(iso),
       embedded: true,
     });
-    return html`${unsafeSVG(picture)}`;
+    return html`<div class="disc" role="img" aria-label=${this._summary(attrs)}>${unsafeSVG(picture)}</div>`;
+  }
+
+  _summary(attrs) {
+    if (attrs.phase === "polar_night") return "The sun stays below the horizon today.";
+    if (attrs.phase === "polar_day") return "The sun stays above the horizon today.";
+    const bits = [];
+    if (attrs.phase === "before_sunrise") bits.push("Before sunrise");
+    else if (attrs.phase === "after_sunset") bits.push("After sunset");
+    else bits.push("Sun above the horizon");
+    if (attrs.sunrise) bits.push(`sunrise ${this._clock(attrs.sunrise)}`);
+    if (attrs.sunset) bits.push(`sunset ${this._clock(attrs.sunset)}`);
+    return bits.join(", ");
+  }
+
+  _interactive() {
+    const action = this.config?.tap_action?.action;
+    return Boolean(action && action !== "none");
+  }
+
+  _tap() {
+    const chosen = this.config?.tap_action;
+    const action = chosen?.action;
+    if (!action || action === "none") return;
+    const entity = this.config?.entity || "sensor.sun_sweep";
+    if (action === "more-info") {
+      this.dispatchEvent(
+        new CustomEvent("hass-more-info", {
+          bubbles: true,
+          composed: true,
+          detail: { entityId: entity },
+        }),
+      );
+      return;
+    }
+    if (action === "navigate" && chosen.navigation_path) {
+      history.pushState(null, "", chosen.navigation_path);
+      this.dispatchEvent(
+        new CustomEvent("location-changed", {
+          bubbles: true,
+          composed: true,
+          detail: { replace: false },
+        }),
+      );
+      return;
+    }
+    if (action === "url" && chosen.url_path) {
+      window.open(chosen.url_path);
+      return;
+    }
+    if (action === "toggle") {
+      this.hass?.callService("homeassistant", "toggle", { entity_id: entity });
+      return;
+    }
+    if (action === "perform-action" || action === "call-service") {
+      const service = chosen.perform_action || chosen.service;
+      if (!service || !service.includes(".")) return;
+      const [domain, name] = service.split(".");
+      const data = { ...(chosen.service_data || {}), ...(chosen.data || {}) };
+      this.hass?.callService(domain, name, data, chosen.target);
+    }
+  }
+
+  _key(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    this._tap();
   }
 
   render() {
@@ -215,7 +286,17 @@ class SunSweepCard extends LitElement {
     const note = notes.length
       ? html`<div class="note">${notes.map((line) => html`<div>${line}</div>`)}</div>`
       : "";
-    return html`<ha-card>${body}${note}</ha-card>`;
+    const interactive = this._interactive();
+    return html`
+      <ha-card
+        class=${interactive ? "actionable" : ""}
+        tabindex=${interactive ? "0" : nothing}
+        @click=${interactive ? this._tap : nothing}
+        @keydown=${interactive ? this._key : nothing}
+      >
+        ${body}${note}
+      </ha-card>
+    `;
   }
 }
 
