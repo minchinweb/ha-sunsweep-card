@@ -94,10 +94,12 @@ class SunSweepCard extends LitElement {
   _clock(iso) {
     const cycle = this.hass?.locale?.time_format;
     const hour12 = cycle === "12" ? true : cycle === "24" ? false : undefined;
+    const timeZone = this.hass?.config?.time_zone;
     return new Date(iso).toLocaleTimeString(this.hass?.locale?.language, {
       hour: "numeric",
       minute: "2-digit",
       hour12,
+      timeZone,
     });
   }
 
