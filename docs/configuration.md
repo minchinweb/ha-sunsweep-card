@@ -40,7 +40,8 @@ as leaving it on.
 | `show_moon` | on | A two-tone disc just outside the rim at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up |
 
-North is the top of the circle. The house sits in the middle, scaled so the
+A black ring circles the daylight disc, the way a compass draws its edge.
+North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
 wedge stays visible around it. The hour lines stop at the building.
 
 ## How to read the wedge

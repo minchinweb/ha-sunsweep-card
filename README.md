@@ -14,7 +14,7 @@ sun is now. Hour lines mark each clock hour. A yellow disc sits on the rim at
 the sun, and a two-tone disc sits just outside the rim at the moon, each only
 while that body is above the horizon.
 
-North is up. The house is your building, not a generic box: House Structure
+A black ring circles the disc. North is up. The house is your building, not a generic box: House Structure
 fetches the footprint (Nominatim, then Overpass) and Sun Sweep reads the ring
 it keeps.
 

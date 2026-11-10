@@ -33,6 +33,7 @@ INK = (61, 74, 87, 255)
 PALE = (246, 216, 74, 90)
 STRONG = (240, 180, 41, 184)
 HOUR = (196, 138, 18, 255)
+RING = (17, 17, 17, 255)
 SUN = (245, 196, 0, 255)
 MOON = (197, 208, 220, 255)
 HOUSE_FILL = (247, 244, 239, 255)
@@ -110,6 +111,13 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
             _sector(attrs["pale_start"], attrs["pale_end"], rim, size, sun_clockwise),
             fill=PALE,
         )
+    ring = 128.0 * size / 320
+    mid = size / 2
+    draw.ellipse(
+        (mid - ring, mid - ring, mid + ring, mid + ring),
+        outline=RING,
+        width=max(3, round(3 * size / 320)),
+    )
     if attrs.get("strong_full"):
         mid = size / 2
         draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=STRONG)
@@ -151,7 +159,7 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
             continue
         x, y = _label(attrs[azimuth_key], size, rim)
         draw.text((x, y), _clock(attrs[key]), font=font, fill=INK, anchor="mm")
-    nx, ny = point_at(0, rim + 14 * size / 320, size)
+    nx, ny = point_at(0, ring - 18 * size / 320, size)
     draw.text((nx, ny + 4 * size / 320), "N", font=font, fill=INK, anchor="mm")
     return image
 

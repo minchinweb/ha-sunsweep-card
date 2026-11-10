@@ -8,10 +8,12 @@ const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
 const SIZE = 320;
 const RIM = 112;
+const RING_R = 128;
 const MOON_RIM = 128;
 const PALE = "#f6d84a";
 const STRONG = "#f0b429";
 const HOUR = "#c48a12";
+const RING = "#111111";
 
 const clockwise = (start, end) => (end - start + 360) % 360;
 const travel = (start, end, sunClockwise) =>
@@ -111,6 +113,7 @@ class SunSweepCard extends LitElement {
       parts.push(wedge("pale", attrs.pale_start, attrs.pale_end, RIM, PALE, 0.35, sunClockwise));
       parts.push(arc(attrs.pale_start, attrs.pale_end, RIM, sunClockwise));
     }
+    parts.push(svg`<circle id="ring" cx="160" cy="160" r=${RING_R} fill="none" stroke=${RING} stroke-width="3"></circle>`);
     if (attrs.strong_full) {
       parts.push(svg`<circle id="strong" cx="160" cy="160" r=${RIM} fill=${STRONG} fill-opacity="0.72"></circle>`);
     } else if (attrs.strong_start != null) {
@@ -161,7 +164,7 @@ class SunSweepCard extends LitElement {
         parts.push(svg`<text id=${id} x=${x.toFixed(1)} y=${y.toFixed(1)} text-anchor="middle" dominant-baseline="middle">${this._clock(attrs[key])}</text>`);
       }
     }
-    const [nx, ny] = pointAt(0, RIM + 14);
+    const [nx, ny] = pointAt(0, RING_R - 18);
     parts.push(svg`<text id="north" x=${nx.toFixed(1)} y=${(ny + 4).toFixed(1)} text-anchor="middle">N</text>`);
     return svg`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}">${parts}</svg>`;
   }

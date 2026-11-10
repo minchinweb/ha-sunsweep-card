@@ -21,6 +21,7 @@ PALE_OPACITY = 0.35
 STRONG = "#f0b429"
 STRONG_OPACITY = 0.72
 HOUR = "#c48a12"
+RING = "#111111"
 SUN_FILL = "#f5c400"
 SUN_STROKE = "#a56b00"
 # Cool grey so the white half of the two-tone moon still reads.

@@ -19,6 +19,7 @@ from .constants import (
     MOON_FILL,
     PALE,
     PALE_OPACITY,
+    RING,
     STRONG,
     STRONG_OPACITY,
     SUN_FILL,
@@ -27,6 +28,7 @@ from .sweep import travel
 
 SIZE = 320
 _RIM = 112.0
+_RING = 128.0
 _MOON_RIM = 128.0
 _SUN_R = 7.0
 _MOON_R = 6.0
@@ -83,7 +85,7 @@ def _message(size: int, text: str) -> str:
 
 
 def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
-    """Draw order: pale wedge, strong wedge, rim, hours, house, sun, moon, times, N."""
+    """Wedges and the black ring, then hours, the house, the bodies, the times and N."""
     parts: list[str] = []
     rim = _RIM * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
@@ -114,6 +116,11 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 "rim", attrs["pale_start"], attrs["pale_end"], rim, size, sun_clockwise
             )
         )
+    ring = _RING * size / SIZE
+    parts.append(
+        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
+        f'fill="none" stroke="{RING}" stroke-width="3"/>'
+    )
     if attrs.get("strong_full"):
         parts.append(
             f'<circle id="strong" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
@@ -153,7 +160,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         parts.append(_disc("moon", x, y, _MOON_R * size / SIZE, MOON_FILL))
     if flags["show_times"]:
         parts.extend(_times(attrs, size, rim))
-    nx, ny = point_at(0, rim + 14, size)
+    nx, ny = point_at(0, ring - 18 * size / SIZE, size)
     parts.append(
         f'<text id="north" x="{nx:.1f}" y="{ny + 4:.1f}" text-anchor="middle" '
         f'fill="var(--primary-text-color)">N</text>'

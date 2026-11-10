@@ -39,6 +39,7 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert svg.count('fill-opacity="0.5"') == 2
     assert "5:04 AM" in svg and "10:06 PM" in svg
     assert ">N<" in svg
+    assert 'id="ring"' in svg and 'stroke="#111111"' in svg
     end = point_at(313.5, 112)
     assert f"{end[0]:.1f}" in svg
 
