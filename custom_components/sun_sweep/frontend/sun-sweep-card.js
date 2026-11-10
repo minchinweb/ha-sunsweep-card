@@ -181,7 +181,11 @@ class SunSweepCard extends LitElement {
     }
     const [nx, ny] = pointAt(0, RING_R - 18);
     parts.push(svg`<text id="north" x=${nx.toFixed(1)} y=${(ny + 4).toFixed(1)} text-anchor="middle">N</text>`);
-    return svg`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}">${parts}</svg>`;
+    const rotation = Number(this.config?.rotation) || 0;
+    const body = rotation
+      ? svg`<g id="rotation" transform="rotate(${rotation} 160 160)">${parts}</g>`
+      : parts;
+    return svg`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}">${body}</svg>`;
   }
 
   render() {
@@ -214,6 +218,12 @@ class SunSweepCardEditor extends LitElement {
       { name: "show_moon", selector: { boolean: {} } },
       { name: "show_hours", selector: { boolean: {} } },
       { name: "show_twilight", selector: { boolean: {} } },
+      {
+        name: "rotation",
+        selector: {
+          number: { min: -180, max: 180, step: 1, mode: "box", unit_of_measurement: "°" },
+        },
+      },
     ];
   }
 
@@ -225,12 +235,14 @@ class SunSweepCardEditor extends LitElement {
       show_moon: this.config.show_moon !== false,
       show_hours: this.config.show_hours !== false,
       show_twilight: this.config.show_twilight !== false,
+      rotation: Number(this.config.rotation) || 0,
     };
   }
 
   _changed(event) {
     const value = event.detail.value;
     if (!value) return;
+    if (!value.rotation) delete value.rotation;
     this.config = value;
     this.dispatchEvent(
       new CustomEvent("config-changed", { detail: { config: value } }),
@@ -251,6 +263,7 @@ class SunSweepCardEditor extends LitElement {
             show_moon: "Moon",
             show_hours: "Hour lines",
             show_twilight: "Twilight",
+            rotation: "Rotation",
           })[item.name]}
         @value-changed=${this._changed}
       ></ha-form>

@@ -40,6 +40,7 @@ as leaving it on.
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
 | `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
+| `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways |
 
 A black ring circles the daylight disc, the way a compass draws its edge.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the

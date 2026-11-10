@@ -131,6 +131,13 @@ def test_toggles_drop_their_marks():
     assert 'id="pale"' in svg and 'id="house"' in svg
 
 
+def test_a_rotation_turns_the_whole_picture():
+    svg = card_svg(SUMMER, {"rotation": -20})
+    assert 'id="rotation"' in svg
+    assert "rotate(-20.0 160.0 160.0)" in svg
+    assert 'id="rotation"' not in card_svg(SUMMER)
+
+
 def test_a_missing_outline_explains_itself():
     svg = card_svg({"outline": []})
     assert "no building outline" in svg

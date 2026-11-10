@@ -47,20 +47,27 @@ def card_svg(attrs: dict, options: dict | None = None, size: int = SIZE) -> str:
 
     Args:
         attrs: The sensor attributes (``outline``, the wedge, the bodies).
-        options: ``show_sun``, ``show_times``, ``show_moon``, ``show_hours``.
-            Each defaults on.
+        options: ``show_sun``, ``show_times``, ``show_moon``, ``show_hours``,
+            ``show_twilight`` (each defaults on) and ``rotation`` in degrees
+            clockwise (defaults to 0, north up).
         size: Width and height in pixels.
 
     Returns:
         An SVG string. With no outline, a one-line explanation and no disc.
     """
     flags = _flags(options)
+    rotation = float((options or {}).get("rotation") or 0)
     if not attrs.get("outline"):
         return _message(
             size, "House Structure has no building outline for this home yet."
         )
     parts = _parts(attrs, flags, size)
     body = "".join(parts)
+    if rotation:
+        body = (
+            f'<g id="rotation" transform="rotate({rotation:.1f} '
+            f'{size / 2:.1f} {size / 2:.1f})">{body}</g>'
+        )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
         f'viewBox="0 0 {size} {size}" font-family="sans-serif" font-size="13">'

@@ -85,3 +85,4 @@ The toggles default on. The visual editor has the same switches.
 | Moon | The two-tone disc on the ring, while the moon is above the horizon |
 | Hour lines | A line at each local hour the sun is up. Noon reaches the centre; every third hour is longer than the hours between |
 | Twilight | A blue-grey wedge from civil dawn to civil dusk, under the daylight |
+| Rotation | Degrees clockwise to turn the whole card. North stays the geographic north of the drawing |
