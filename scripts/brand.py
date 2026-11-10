@@ -2,11 +2,14 @@
 """Draw the Sun Sweep mark: a top-down house on its daylight wedge.
 
 Writes the SVG sources under ``brand/`` and the PNG files Home Assistant
-shows on the integration page. Run from the repository root::
+shows on the integration page. Sizes follow the integration brands guide:
+a square icon at 256 and 512, and a landscape logo whose short side is 256
+and 512. Run from the repository root::
 
     uv run python scripts/brand.py
 
-Needs Pillow, which the test environment already has.
+Needs Pillow, which the test environment already has, and optipng on PATH
+so the files are interlaced, which the brands guide prefers.
 """
 
 from __future__ import annotations
@@ -14,6 +17,8 @@ from __future__ import annotations
 import contextlib
 import math
 from pathlib import Path
+import shutil
+import subprocess
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -90,49 +95,90 @@ def _font(size: int) -> ImageFont.FreeTypeFont:
     return font
 
 
-def _icon(pixels: int, dark: bool) -> Image.Image:
-    # drawn large and scaled down, so the wedge edge is smooth
-    big = pixels * 4
+def _tight_mark(dark: bool) -> Image.Image:
+    """The mark, cropped to its pixels, drawn large enough to scale cleanly."""
+    big = 2048
     work = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     draw_mark(work, big / 2, big * 0.36, dark)
-    return work.resize((pixels, pixels), Image.Resampling.LANCZOS)
+    box = work.getbbox()
+    if box is None:
+        return work
+    return work.crop(box)
+
+
+def _icon(pixels: int, dark: bool) -> Image.Image:
+    """A square icon. The mark fills it; only the shorter axis is letterboxed."""
+    mark = _tight_mark(dark)
+    side = max(mark.size)
+    square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    square.alpha_composite(mark, ((side - mark.width) // 2, (side - mark.height) // 2))
+    return square.resize((pixels, pixels), Image.Resampling.LANCZOS)
 
 
 def _logo(height: int, dark: bool) -> Image.Image:
+    """A landscape wordmark whose short side is ``height``, with no outer margin."""
     mark = _icon(height, dark)
-    font = _font(int(height * 0.42))
+    # The old wordmark was sized against a padded mark. Keep that proportion
+    # now that the mark fills its square (the wedge used 0.72 of the canvas).
+    font = _font(round(height * 0.42 / 0.72))
     text = "Sun Sweep"
-    gap = int(height * 0.16)
+    gap = round(height * 0.12)
     measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
     width = math.ceil(measure.textlength(text, font=font))
-    image = Image.new(
-        "RGBA",
-        (height + gap + width + int(height * 0.08), height),
-        (0, 0, 0, 0),
-    )
+    image = Image.new("RGBA", (height + gap + width, height), (0, 0, 0, 0))
     image.alpha_composite(mark, (0, 0))
     ink = (244, 247, 251, 255) if dark else (61, 74, 87, 255)
     draw = ImageDraw.Draw(image)
     draw.text((height + gap, height / 2), text, font=font, fill=ink, anchor="lm")
-    return image
+    box = image.getbbox()
+    if box is None:
+        return image
+    cropped = image.crop(box)
+    short = min(cropped.size)
+    if short == height:
+        return cropped
+    factor = height / short
+    return cropped.resize(
+        (round(cropped.width * factor), round(cropped.height * factor)),
+        Image.Resampling.LANCZOS,
+    )
+
+
+def _save(image: Image.Image, path: Path) -> None:
+    image.save(path, format="PNG", optimize=True)
+    optipng = shutil.which("optipng")
+    if optipng is None:
+        raise SystemExit("optipng is required to write interlaced brand images")
+    subprocess.run([optipng, "-i", "1", "-o", "2", "-quiet", str(path)], check=True)
 
 
 def _svg(dark: bool) -> str:
-    """The icon as SVG, the source the PNGs are drawn to match."""
+    """The icon as SVG, cropped to the mark the same way as the PNG."""
     edge = "#f4f7fb" if dark else "#3d4a57"
     fill = "#243040" if dark else "#f7f4ef"
     centre, rim = 256.0, 184.0
+    sun = _at(NOW, rim, centre)
+    points = [
+        *_sector(RISE, SET, rim, centre),
+        *_house(centre, rim),
+        (sun[0] - 24, sun[1]),
+        (sun[0] + 24, sun[1]),
+        (sun[0], sun[1] - 24),
+        (sun[0], sun[1] + 24),
+    ]
+    pad = 8.0
+    left = min(point[0] for point in points) - pad
+    top = min(point[1] for point in points) - pad
+    right = max(point[0] for point in points) + pad
+    bottom = max(point[1] for point in points) + pad
 
     def ring(start: float, end: float) -> str:
-        points = " ".join(
-            f"{x:.1f},{y:.1f}" for x, y in _sector(start, end, rim, centre)
-        )
-        return points
+        return " ".join(f"{x:.1f},{y:.1f}" for x, y in _sector(start, end, rim, centre))
 
     house = " ".join(f"{x:.1f},{y:.1f}" for x, y in _house(centre, rim))
-    sun = _at(NOW, rim, centre)
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{left:.1f} {top:.1f} '
+        f'{right - left:.1f} {bottom - top:.1f}">'
         f'<polygon points="{ring(RISE, SET)}" fill="#f6d84a" fill-opacity="0.35"/>'
         f'<polygon points="{ring(RISE, NOW)}" fill="#f0b429" fill-opacity="0.72"/>'
         f'<polygon points="{house}" fill="{fill}" stroke="{edge}" stroke-width="8"/>'
@@ -147,13 +193,13 @@ def main() -> None:
     (SOURCES / "icon.svg").write_text(_svg(False), encoding="utf-8")
     (SOURCES / "dark_icon.svg").write_text(_svg(True), encoding="utf-8")
     for dark, name in ((False, "icon"), (True, "dark_icon")):
-        _icon(256, dark).save(BRAND / f"{name}.png")
-        _icon(512, dark).save(BRAND / f"{name}@2x.png")
+        _save(_icon(256, dark), BRAND / f"{name}.png")
+        _save(_icon(512, dark), BRAND / f"{name}@2x.png")
     for dark, name in ((False, "logo"), (True, "dark_logo")):
-        logo = _logo(128, dark)
-        logo.save(BRAND / f"{name}.png")
-        _logo(256, dark).save(BRAND / f"{name}@2x.png")
-        logo.save(SOURCES / f"{name}.png")
+        logo = _logo(256, dark)
+        _save(logo, BRAND / f"{name}.png")
+        _save(_logo(512, dark), BRAND / f"{name}@2x.png")
+        _save(logo, SOURCES / f"{name}.png")
 
 
 if __name__ == "__main__":
