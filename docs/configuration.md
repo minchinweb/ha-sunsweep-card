@@ -38,11 +38,11 @@ as leaving it on.
 | `show_sun` | on | A two-tone yellow disc centred on the black ring at the sun's compass bearing, only while the sun is above the horizon |
 | `show_times` | on | Sunrise and sunset, in your Home Assistant time format, just outside the two edges of the wedge |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
-| `show_hours` | on | A line through the wedge at each local hour the sun is up |
+| `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
 
 A black ring circles the daylight disc, the way a compass draws its edge.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
-wedge stays visible around it. The hour lines stop at the building.
+wedge stays visible around it. Noon is drawn across the building to the centre. Every third hour reaches further in than the hours between, so the afternoon can be counted off without reading a clock.
 
 ## How to read the wedge
 

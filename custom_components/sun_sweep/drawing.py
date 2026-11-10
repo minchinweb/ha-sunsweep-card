@@ -139,10 +139,11 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
             )
         )
     house = _house(attrs["outline"], size, rim)
+    parts.append(house[0])
     if flags["show_hours"] and attrs.get("hour_azimuths"):
-        inner = min(house[1] + 6, rim - 8)
         lines = []
         for mark in attrs["hour_azimuths"]:
+            inner = _hour_inner(mark["time"], house[1], rim, size)
             x1, y1 = point_at(mark["azimuth"], inner, size)
             x2, y2 = point_at(mark["azimuth"], rim, size)
             lines.append(
@@ -150,7 +151,6 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 f'stroke="{HOUR}" stroke-width="1.5"/>'
             )
         parts.append(f'<g id="hours">{"".join(lines)}</g>')
-    parts.append(house[0])
     if flags["show_sun"] and attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], ring, size)
         parts.append(_disc("sun", x, y, _SUN_R * size / SIZE, SUN_FILL))
@@ -165,6 +165,21 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         f'fill="var(--primary-text-color)">N</text>'
     )
     return parts
+
+
+def _hour_inner(clock: str, house_radius: float, rim: float, size: int) -> float:
+    """How close to the centre an hour line starts.
+
+    Noon runs to the centre. Every third hour (3, 6, 9, and the same marks
+    through the afternoon and night) starts inside the house. The rest start
+    just outside it. All of them end on the daylight rim.
+    """
+    hour = int(str(clock)[:2])
+    if hour == 12:
+        return 0.0
+    if hour % 3 == 0:
+        return house_radius * 0.45
+    return min(house_radius + 6 * size / SIZE, rim - 8 * size / SIZE)
 
 
 def _disc(name: str, x: float, y: float, radius: float, fill: str) -> str:

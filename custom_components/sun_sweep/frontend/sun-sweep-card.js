@@ -45,6 +45,13 @@ function arc(start, end, radius, sunClockwise) {
   return svg`<path id="rim" d=${d} fill="none" stroke=${HOUR} stroke-width="1.5"></path>`;
 }
 
+function hourInner(time, houseRadius) {
+  const hour = Number(String(time).slice(0, 2));
+  if (hour === 12) return 0;
+  if (hour % 3 === 0) return houseRadius * 0.45;
+  return Math.min(houseRadius + 6, RIM - 8);
+}
+
 function disc(id, x, y, radius, fill) {
   const cx = x.toFixed(1);
   const top = (y - radius).toFixed(1);
@@ -134,17 +141,17 @@ class SunSweepCard extends LitElement {
     const houseRadius = Math.max(
       ...house.map(([x, y]) => Math.hypot(x - SIZE / 2, y - SIZE / 2)),
     );
+    const points = house.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+    parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_hours") && attrs.hour_azimuths?.length) {
-      const inner = Math.min(houseRadius + 6, RIM - 8);
       const lines = attrs.hour_azimuths.map((mark) => {
+        const inner = hourInner(mark.time, houseRadius);
         const [x1, y1] = pointAt(mark.azimuth, inner);
         const [x2, y2] = pointAt(mark.azimuth, RIM);
         return svg`<line x1=${x1.toFixed(1)} y1=${y1.toFixed(1)} x2=${x2.toFixed(1)} y2=${y2.toFixed(1)} stroke=${HOUR} stroke-width="1.5"></line>`;
       });
       parts.push(svg`<g id="hours">${lines}</g>`);
     }
-    const points = house.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-    parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_sun") && attrs.sun_elevation > 0) {
       const [x, y] = pointAt(attrs.sun_azimuth, RING_R);
       parts.push(disc("sun", x, y, 8, "#f5c400"));

@@ -129,10 +129,19 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
             fill=STRONG,
         )
     house, house_radius = _house(attrs["outline"], size, rim)
+    width = max(2, int(size / 160))
+    draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
+    draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("hour_azimuths"):
-        inner = min(house_radius + 6 * size / 320, rim - 8)
         width = max(2, int(size / 220))
         for mark in attrs["hour_azimuths"]:
+            hour = int(str(mark["time"])[:2])
+            if hour == 12:
+                inner = 0.0
+            elif hour % 3 == 0:
+                inner = house_radius * 0.45
+            else:
+                inner = min(house_radius + 6 * size / 320, rim - 8 * size / 320)
             draw.line(
                 [
                     point_at(mark["azimuth"], inner, size),
@@ -141,9 +150,6 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
                 fill=HOUR,
                 width=width,
             )
-    width = max(2, int(size / 160))
-    draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
-    draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], ring, size)
         _disc(image, x, y, 8 * size / 320, SUN)

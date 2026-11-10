@@ -82,4 +82,4 @@ All four toggles default on. The visual editor has the same switches.
 | Sun | The two-tone yellow disc on the ring, while the sun is above the horizon |
 | Sunrise and sunset | Those clock times just outside the two edges of the wedge |
 | Moon | The two-tone disc on the ring, while the moon is above the horizon |
-| Hour lines | A line at each local hour the sun is up, from the house out to the rim |
+| Hour lines | A line at each local hour the sun is up. Noon reaches the centre; every third hour is longer than the hours between |

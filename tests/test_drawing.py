@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+import math
+import re
+
+import pytest
+
 from custom_components.sun_sweep.drawing import card_svg, point_at
 
 HOUSE = [[-5, -4], [5, -4], [5, 4], [-5, 4]]
@@ -46,6 +51,25 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     moon = point_at(SUMMER["moon_azimuth"], 128)
     assert f'cx="{sun[0]:.1f}"' in svg
     assert f'cx="{moon[0]:.1f}"' in svg
+
+
+def test_noon_reaches_the_centre_and_every_third_hour_runs_longer():
+    marked = {
+        **SUMMER,
+        "hour_azimuths": [
+            {"time": "12:00", "azimuth": 180.0},
+            {"time": "15:00", "azimuth": 230.0},
+            {"time": "16:00", "azimuth": 245.0},
+        ],
+    }
+    svg = card_svg(marked)
+    assert 'x1="160.0" y1="160.0"' in svg
+    inners = []
+    for x1, y1 in re.findall(r'<line x1="([\d.]+)" y1="([\d.]+)"', svg):
+        inners.append(math.hypot(float(x1) - 160, float(y1) - 160))
+    inners.sort()
+    assert inners[0] == pytest.approx(0, abs=0.05)
+    assert inners[1] < inners[2]
 
 
 def test_a_short_winter_arc_is_the_minor_one():
