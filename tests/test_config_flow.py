@@ -1,5 +1,5 @@
 # Copyright (c) 2026 MinchinWeb
-"""The config flow asks for nothing, and stops when there is no outline."""
+"""The config flow asks for nothing, even when the outline is missing."""
 
 from __future__ import annotations
 
@@ -28,10 +28,13 @@ async def test_without_house_structure_the_entry_is_still_created(
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
-async def test_an_outline_is_required(hass: HomeAssistant) -> None:
+async def test_a_missing_outline_still_creates_the_entry(hass: HomeAssistant) -> None:
     MockConfigEntry(domain="house_structure", data={}).add_to_hass(hass)
-    result = await _flow(hass).async_step_user()
-    assert result["reason"] == "no_outline"
+    flow = _flow(hass)
+    result = await flow.async_step_user()
+    assert result["type"] is FlowResultType.FORM
+    result = await flow.async_step_user({})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
 async def test_the_entry_is_created_when_the_outline_is_there(

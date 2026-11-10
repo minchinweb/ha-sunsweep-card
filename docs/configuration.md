@@ -16,10 +16,10 @@ is the page linked from the integration's help view.
    building itself. The building has to be on OpenStreetMap at your home
    location. House Structure says so on its form when it cannot find one.
 
-Without House Structure the card draws a 10 m square and says so underneath.
-If House Structure is installed but has not found a building yet, Sun Sweep
-stops on its form and the card says the outline is missing. Set House
-Structure up at this home, then add Sun Sweep again.
+Without a building outline the card draws a 10 m square and says so
+underneath. That is true when House Structure is not installed, and when it
+is installed but has not found a building yet. Sun Sweep still sets up, and
+it picks up an outline House Structure saves later.
 
 ## The card
 
@@ -85,9 +85,11 @@ the sun and moon are) and does not need them copied into the card.
 
 ## When the picture is missing
 
-The card says **House Structure has no building outline for this home yet**
-when House Structure is installed but the outline has not been found, and
-**Sun Sweep is not set up** when the sensor is not there. With no House
-Structure integration at all, the card draws the square instead. A restart picks up an outline House Structure has already
-saved. House Structure fetches again when the home coordinates change, and
-Sun Sweep reads the new ring within a minute.
+The card says **Sun Sweep is not set up** when the sensor is not there.
+With no building outline it draws the square. The note underneath says
+whether House Structure is missing or has not found a building yet. A
+restart picks up an outline House Structure has already saved. House
+Structure fetches again when the home coordinates change, and Sun Sweep
+reads the new ring within a minute. The card appears in the dashboard
+picker after Sun Sweep is added. Reload the page if the picker was already
+open.

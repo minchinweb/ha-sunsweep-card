@@ -7,8 +7,7 @@
       }
     },
     "abort": {
-      "single_instance_allowed": "Sun Sweep is already set up.",
-      "no_outline": "House Structure has no building outline for this home yet. Set House Structure up at this home, where OpenStreetMap has the building, and try again."
+      "single_instance_allowed": "Sun Sweep is already set up."
     }
   }
 }

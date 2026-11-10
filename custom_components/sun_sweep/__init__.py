@@ -17,6 +17,7 @@ async def async_setup(hass, config) -> bool:
     """Serve the card and the snapshot command."""
     from homeassistant.components import frontend
     from homeassistant.components.http import StaticPathConfig
+    from homeassistant.setup import async_when_setup
 
     from .api import async_register
 
@@ -27,8 +28,11 @@ async def async_setup(hass, config) -> bool:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(CARD_PATH, str(Path(__file__).parent / "frontend"), False)]
     )
-    if frontend.DATA_EXTRA_MODULE_URL in hass.data:
+
+    async def _register_card(_hass, _component) -> None:
         frontend.add_extra_js_url(hass, CARD_URL)
+
+    async_when_setup(hass, "frontend", _register_card)
     return True
 
 

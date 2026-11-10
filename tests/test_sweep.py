@@ -187,6 +187,14 @@ def test_without_house_structure_the_outline_is_a_ten_metre_square():
     assert kept["outline"]
 
 
+def test_a_missing_building_still_draws_the_square():
+    when = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    attrs = finish_snapshot(when, LAT, LON, [], house_structure=True)
+    assert attrs["outline_missing"] is True
+    assert attrs["outline"][0] == [-5.0, -5.0]
+    assert "outline_fallback" not in attrs
+
+
 def test_a_missing_outline_is_an_empty_list():
     attrs = snapshot(_at(EDMONTON, 2026, 6, 21, 9, 30), LAT, LON, None)
     assert attrs["outline"] == []

@@ -339,6 +339,11 @@ class SunSweepCard extends LitElement {
     if (!waiting && attrs?.outline_fallback) {
       notes.push("House Structure is not installed, so this is a plain square.");
     }
+    if (!waiting && attrs?.outline_missing) {
+      notes.push(
+        "House Structure has no building outline for this home yet, so this is a plain square.",
+      );
+    }
     if (!waiting && attrs?.phase === "polar_night") {
       notes.push("The sun stays below the horizon today.");
     }

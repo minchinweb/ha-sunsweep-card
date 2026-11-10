@@ -57,8 +57,9 @@ Structure is not installed.
 ## Installation
 
 House Structure is optional. Install it when you want the real building
-instead of a 10 m square, and let it find the building at your home position
-first. Sun Sweep does not call OpenStreetMap itself.
+instead of a 10 m square. Sun Sweep sets up either way, and uses the
+outline once House Structure has found the building at your home position.
+Sun Sweep does not call OpenStreetMap itself.
 
 [![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=minchinweb&repository=ha-sunsweep-card&category=integration)
 
