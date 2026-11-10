@@ -221,6 +221,10 @@ _SEASON = {
     "autumn-equinox": "september",
     "fall-equinox": "september",
     "winter-solstice": "december",
+    "spring": "march",
+    "summer": "june",
+    "autumn": "september",
+    "winter": "december",
 }
 _SOUTHERN = {
     "vernal-equinox": "september",
@@ -230,6 +234,10 @@ _SOUTHERN = {
     "autumn-equinox": "march",
     "fall-equinox": "march",
     "winter-solstice": "june",
+    "spring": "september",
+    "summer": "december",
+    "autumn": "march",
+    "winter": "june",
 }
 
 # Meeus, Astronomical Algorithms, for the years 1000 to 3000.

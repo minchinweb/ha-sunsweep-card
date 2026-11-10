@@ -168,6 +168,12 @@ def test_season_names_follow_the_hemisphere():
     assert resolve_when(now, "autumn-equinox", "12:00", south).month == 3
     assert resolve_when(now, "march-equinox", "12:00", south).month == 3
     assert resolve_when(now, "june-solstice", "12:00", south).month == 6
+    assert resolve_when(now, "summer", "12:00", south).month == 12
+    assert resolve_when(now, "winter", "12:00", south).month == 6
+    assert resolve_when(now, "spring", "12:00", south).month == 9
+    assert resolve_when(now, "autumn", "12:00", south).month == 3
+    assert resolve_when(now, "summer", "12:00", LAT).month == 6
+    assert resolve_when(now, "winter", "12:00", LAT).month == 12
 
 
 def test_without_house_structure_the_outline_is_a_ten_metre_square():
