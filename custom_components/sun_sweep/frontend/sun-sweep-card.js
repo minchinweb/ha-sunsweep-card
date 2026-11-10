@@ -90,8 +90,12 @@ class SunSweepCard extends LitElement {
     return document.createElement("sun-sweep-card-editor");
   }
 
-  static getStubConfig() {
-    return { entity: "sensor.sun_sweep" };
+  static getStubConfig(hass, entities = [], entitiesFallback = []) {
+    const candidates = [...entities, ...entitiesFallback];
+    const match = candidates.find(
+      (id) => hass?.states?.[id]?.attributes?.outline,
+    );
+    return { entity: match || "sensor.sun_sweep" };
   }
 
   getCardSize() {
@@ -514,5 +518,10 @@ if (!window.customCards.some((card) => card.type === "sun-sweep-card")) {
     description: "Today's sun angles around your house, top down.",
     preview: true,
     documentationURL: DOCS,
+    getEntitySuggestion: (hass, entityId) => {
+      const outline = hass?.states?.[entityId]?.attributes?.outline;
+      if (!outline) return null;
+      return { config: { type: "custom:sun-sweep-card", entity: entityId } };
+    },
   });
 }

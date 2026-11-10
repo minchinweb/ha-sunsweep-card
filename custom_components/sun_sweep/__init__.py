@@ -32,7 +32,29 @@ async def async_setup(hass, config) -> bool:
     async def _register_card(_hass, _component) -> None:
         frontend.add_extra_js_url(hass, CARD_URL)
 
+    async def _register_resource(_hass, _component) -> None:
+        """Put the card on the dashboard resource list, which the picker loads."""
+        from homeassistant.components.lovelace.const import LOVELACE_DATA
+
+        data = hass.data.get(LOVELACE_DATA)
+        resources = getattr(data, "resources", None)
+        if resources is None or not hasattr(resources, "async_create_item"):
+            return
+        await resources.async_get_info()
+        stem = f"{CARD_PATH}/sun-sweep-card.js"
+        for item in resources.async_items() or []:
+            url = str(item.get("url", ""))
+            if url.split("?", 1)[0] != stem:
+                continue
+            if url != CARD_URL:
+                await resources.async_update_item(
+                    item["id"], {"res_type": "module", "url": CARD_URL}
+                )
+            return
+        await resources.async_create_item({"res_type": "module", "url": CARD_URL})
+
     async_when_setup(hass, "frontend", _register_card)
+    async_when_setup(hass, "lovelace", _register_resource)
     return True
 
 
