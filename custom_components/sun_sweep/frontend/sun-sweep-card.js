@@ -41,6 +41,19 @@ class SunSweepCard extends LitElement {
     return { entity: "sensor.sun_sweep" };
   }
 
+  getCardSize() {
+    return 5;
+  }
+
+  getGridOptions() {
+    return {
+      columns: 6,
+      rows: 6,
+      min_columns: 4,
+      min_rows: 4,
+    };
+  }
+
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
     this.config = config;
