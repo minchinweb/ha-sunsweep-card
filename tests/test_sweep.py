@@ -18,6 +18,7 @@ from custom_components.sun_sweep.sweep import (
     day_sweep,
     moon_position,
     project_outline,
+    resolve_when,
     snapshot,
     travel,
 )
@@ -125,6 +126,18 @@ def test_projection_centres_the_box_and_keeps_north_positive():
     assert (min(norths) + max(norths)) / 2 == pytest.approx(0, abs=0.05)
     assert max(norths) == pytest.approx(4, abs=0.05)
     assert max(norths) > 0
+
+
+def test_a_bare_date_keeps_the_clock_time_and_a_full_one_replaces_it():
+    now = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    assert resolve_when(now, "2026-12-21", None) == _at(EDMONTON, 2026, 12, 21, 9, 30)
+    assert resolve_when(now, "2026-12-21", "15:04") == _at(
+        EDMONTON, 2026, 12, 21, 15, 4
+    )
+    pinned = resolve_when(now, "2026-01-02T08:15:00-07:00", None)
+    assert pinned == datetime(2026, 1, 2, 8, 15, tzinfo=EDMONTON)
+    with pytest.raises(ValueError):
+        resolve_when(now, "June", None)
 
 
 def test_a_missing_outline_is_an_empty_list():

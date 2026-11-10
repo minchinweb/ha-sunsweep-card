@@ -71,7 +71,7 @@ function along(azimuth, houseRadius) {
 }
 
 class SunSweepCard extends LitElement {
-  static properties = { hass: {}, config: {} };
+  static properties = { hass: {}, config: {}, _fixed: { state: true } };
 
   static styles = css`
     :host { display: block; }
@@ -95,6 +95,34 @@ class SunSweepCard extends LitElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
     this.config = config;
+  }
+
+  willUpdate(changed) {
+    if (changed.has("config") || changed.has("hass")) this._loadFixed();
+  }
+
+  async _loadFixed() {
+    const date = this.config?.date;
+    if (!date || !this.hass?.callWS) {
+      this._fixed = undefined;
+      this._fixedKey = "";
+      return;
+    }
+    const key = `${date}|${this.config.time || ""}`;
+    if (key === this._fixedKey) return;
+    this._fixedKey = key;
+    try {
+      const attrs = await this.hass.callWS({
+        type: "sun_sweep/snapshot",
+        date,
+        time: this.config.time || undefined,
+      });
+      if (this._fixedKey === key) this._fixed = attrs;
+    } catch (err) {
+      if (this._fixedKey === key) {
+        this._fixed = { error: err?.message || "That date could not be drawn." };
+      }
+    }
   }
 
   _on(key) {
@@ -191,13 +219,19 @@ class SunSweepCard extends LitElement {
   render() {
     const entity = this.config?.entity || "sensor.sun_sweep";
     const state = this.hass?.states?.[entity];
+    const pinned = Boolean(this.config?.date);
+    const attrs = pinned ? this._fixed : state?.attributes;
     let body;
-    if (!state) {
+    if (pinned && !this._fixed) {
+      body = html`<div class="message">Drawing ${this.config.date}…</div>`;
+    } else if (pinned && this._fixed?.error) {
+      body = html`<div class="message">${this._fixed.error}</div>`;
+    } else if (!pinned && !state) {
       body = html`<div class="message">Sun Sweep is not set up.</div>`;
-    } else if (!state.attributes?.outline?.length) {
+    } else if (!attrs?.outline?.length) {
       body = html`<div class="message">House Structure has no building outline for this home yet.</div>`;
     } else {
-      body = this._picture(state.attributes);
+      body = this._picture(attrs);
     }
     return html`<ha-card>${body}</ha-card>`;
   }
@@ -224,6 +258,8 @@ class SunSweepCardEditor extends LitElement {
           number: { min: -180, max: 180, step: 1, mode: "box", unit_of_measurement: "°" },
         },
       },
+      { name: "date", selector: { text: {} } },
+      { name: "time", selector: { text: {} } },
     ];
   }
 
@@ -236,6 +272,8 @@ class SunSweepCardEditor extends LitElement {
       show_hours: this.config.show_hours !== false,
       show_twilight: this.config.show_twilight !== false,
       rotation: Number(this.config.rotation) || 0,
+      date: this.config.date || "",
+      time: this.config.time || "",
     };
   }
 
@@ -243,6 +281,8 @@ class SunSweepCardEditor extends LitElement {
     const value = event.detail.value;
     if (!value) return;
     if (!value.rotation) delete value.rotation;
+    if (!value.date) delete value.date;
+    if (!value.time) delete value.time;
     this.config = value;
     this.dispatchEvent(
       new CustomEvent("config-changed", { detail: { config: value } }),
@@ -264,6 +304,8 @@ class SunSweepCardEditor extends LitElement {
             show_hours: "Hour lines",
             show_twilight: "Twilight",
             rotation: "Rotation",
+            date: "Date (YYYY-MM-DD)",
+            time: "Time (HH:MM)",
           })[item.name]}
         @value-changed=${this._changed}
       ></ha-form>

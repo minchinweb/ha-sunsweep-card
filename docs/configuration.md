@@ -41,6 +41,8 @@ as leaving it on.
 | `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
 | `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
 | `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways |
+| `date` | | Pin the card to a day, `YYYY-MM-DD`, or a full ISO datetime. The sensor itself stays live. Leave this out for today |
+| `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day |
 
 A black ring circles the daylight disc, the way a compass draws its edge.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
@@ -59,6 +61,18 @@ you can still see the day that just finished.
 
 On a polar day the pale wedge is the full disc. On a polar night there is no
 wedge and no hour lines.
+
+To hold the picture on one moment, for a screenshot or while checking the
+drawing, set `date` and optionally `time`:
+
+```yaml
+type: custom:sun-sweep-card
+date: "2026-06-21"
+time: "09:30"
+```
+
+The pictures in the readme are rendered the same way, with
+`python scripts/render_card.py --date 2026-06-21 --time 09:30 --name preview`.
 
 The sensor's state is `above_horizon` or `below_horizon`. The card uses the
 attributes (the outline in metres, the wedge, the hour bearings, and where

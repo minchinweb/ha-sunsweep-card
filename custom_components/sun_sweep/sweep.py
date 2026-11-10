@@ -205,6 +205,35 @@ def day_sweep(when: datetime, latitude: float, longitude: float) -> Sweep:
     )
 
 
+def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> datetime:
+    """The moment a pinned card should draw.
+
+    Args:
+        now: The live local time. Its clock is kept when ``date`` is only a day.
+        date: ``YYYY-MM-DD``, or a full ISO datetime. Empty means ``now``.
+        clock: ``HH:MM``, used with a bare date. Ignored when ``date`` has a time.
+
+    Raises:
+        ValueError: The date or the clock cannot be read.
+    """
+    if not date or not str(date).strip():
+        return now
+    text = str(date).strip()
+    if "T" in text:
+        parsed = datetime.fromisoformat(text)
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=now.tzinfo)
+        return parsed
+    year_s, month_s, day_s = text.split("-")
+    hour, minute = now.hour, now.minute
+    if clock and str(clock).strip():
+        hour_s, minute_s, *_rest = str(clock).strip().split(":")
+        hour, minute = int(hour_s), int(minute_s)
+    return datetime(
+        int(year_s), int(month_s), int(day_s), hour, minute, tzinfo=now.tzinfo
+    )
+
+
 def snapshot(
     when: datetime,
     latitude: float,

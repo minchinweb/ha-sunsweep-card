@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 from PIL import Image, ImageDraw, ImageFont
 
 from custom_components.sun_sweep.drawing import card_svg, point_at
-from custom_components.sun_sweep.sweep import snapshot, travel
+from custom_components.sun_sweep.sweep import resolve_when, snapshot, travel
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "images"
@@ -199,8 +199,19 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Render Sun Sweep card pictures.")
+    parser.add_argument("--date", help="YYYY-MM-DD or an ISO datetime")
+    parser.add_argument("--time", help="HH:MM, with a bare --date")
+    parser.add_argument("--name", default="preview", help="File name for one picture")
+    args = parser.parse_args()
+    if args.date:
+        scenes = ((args.name, resolve_when(datetime.now(ZONE), args.date, args.time)),)
+    else:
+        scenes = SCENES
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, when in SCENES:
+    for name, when in scenes:
         attrs = snapshot(when, LAT, LON, HOUSE)
         svg = card_svg(attrs).replace("var(--primary-text-color)", "#3d4a57")
         (OUT / f"{name}.svg").write_text(svg, encoding="utf-8")

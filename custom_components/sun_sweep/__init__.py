@@ -14,9 +14,13 @@ from .constants import CARD_PATH, CARD_URL, DOMAIN, PLATFORMS
 
 
 async def async_setup(hass, config) -> bool:
-    """Serve the card."""
+    """Serve the card and the snapshot command."""
     from homeassistant.components import frontend
     from homeassistant.components.http import StaticPathConfig
+
+    from .api import async_register
+
+    async_register(hass)
 
     if hass.http is None:
         return True

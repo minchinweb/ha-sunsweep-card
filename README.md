@@ -86,3 +86,4 @@ The toggles default on. The visual editor has the same switches.
 | Hour lines | A line at each local hour the sun is up. Noon reaches the centre; every third hour is longer than the hours between |
 | Twilight | A blue-grey wedge from civil dawn to civil dusk, under the daylight |
 | Rotation | Degrees clockwise to turn the whole card. North stays the geographic north of the drawing |
+| Date and time | Pin the drawing to `YYYY-MM-DD` and an optional `HH:MM`, for a screenshot or while checking a day. The sensor stays on the live clock |
