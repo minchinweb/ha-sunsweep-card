@@ -44,6 +44,14 @@ function arc(start, end, radius, sunClockwise) {
   return svg`<path id="rim" d=${d} fill="none" stroke=${HOUR} stroke-width="1.5"></path>`;
 }
 
+function disc(id, x, y, radius, fill) {
+  const cx = x.toFixed(1);
+  const top = (y - radius).toFixed(1);
+  const bottom = (y + radius).toFixed(1);
+  const d = `M ${cx} ${top} A ${radius} ${radius} 0 0 1 ${cx} ${bottom} Z`;
+  return svg`<g id=${id}><circle cx=${cx} cy=${y.toFixed(1)} r=${radius} fill=${fill}></circle><path d=${d} fill="#ffffff" fill-opacity="0.5"></path></g>`;
+}
+
 function labelAt(azimuth) {
   for (const radius of [RIM + 16, RIM - 20]) {
     const [x, y] = pointAt(azimuth, radius);
@@ -137,11 +145,11 @@ class SunSweepCard extends LitElement {
     parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_sun") && attrs.sun_elevation > 0) {
       const [x, y] = pointAt(attrs.sun_azimuth, RIM);
-      parts.push(svg`<circle id="sun" cx=${x.toFixed(1)} cy=${y.toFixed(1)} r="7" fill="#f5c400" stroke="#a56b00" stroke-width="1.5"></circle>`);
+      parts.push(disc("sun", x, y, 7, "#f5c400"));
     }
     if (this._on("show_moon") && attrs.moon_elevation > 0) {
       const [x, y] = pointAt(attrs.moon_azimuth, MOON_RIM);
-      parts.push(svg`<circle id="moon" cx=${x.toFixed(1)} cy=${y.toFixed(1)} r="6" fill="#f4f7fb" stroke="#8aa0b8" stroke-width="1.5"></circle>`);
+      parts.push(disc("moon", x, y, 6, "#c5d0dc"));
     }
     if (this._on("show_times")) {
       for (const [key, az, id] of [

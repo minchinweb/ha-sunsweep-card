@@ -35,9 +35,9 @@ as leaving it on.
 | Option | Default | What you get |
 | --- | --- | --- |
 | `entity` | `sensor.sun_sweep` | The sensor this integration creates |
-| `show_sun` | on | A yellow disc on the rim at the sun's compass bearing, only while the sun is above the horizon |
+| `show_sun` | on | A two-tone yellow disc on the rim at the sun's compass bearing, only while the sun is above the horizon |
 | `show_times` | on | Sunrise and sunset, in your Home Assistant time format, just outside the two edges of the wedge |
-| `show_moon` | on | A white disc just outside the rim at the moon's bearing, only while the moon is above the horizon |
+| `show_moon` | on | A two-tone disc just outside the rim at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up |
 
 North is the top of the circle. The house sits in the middle, scaled so the

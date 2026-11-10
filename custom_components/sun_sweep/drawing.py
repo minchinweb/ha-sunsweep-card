@@ -17,13 +17,11 @@ from .constants import (
     HOUSE_FILL,
     HOUSE_STROKE,
     MOON_FILL,
-    MOON_STROKE,
     PALE,
     PALE_OPACITY,
     STRONG,
     STRONG_OPACITY,
     SUN_FILL,
-    SUN_STROKE,
 )
 from .sweep import travel
 
@@ -149,16 +147,10 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
     parts.append(house[0])
     if flags["show_sun"] and attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], rim, size)
-        parts.append(
-            f'<circle id="sun" cx="{x:.1f}" cy="{y:.1f}" r="{_SUN_R}" '
-            f'fill="{SUN_FILL}" stroke="{SUN_STROKE}" stroke-width="1.5"/>'
-        )
+        parts.append(_disc("sun", x, y, _SUN_R * size / SIZE, SUN_FILL))
     if flags["show_moon"] and attrs.get("moon_elevation", -1) > 0:
         x, y = point_at(attrs["moon_azimuth"], _MOON_RIM * size / SIZE, size)
-        parts.append(
-            f'<circle id="moon" cx="{x:.1f}" cy="{y:.1f}" r="{_MOON_R}" '
-            f'fill="{MOON_FILL}" stroke="{MOON_STROKE}" stroke-width="1.5"/>'
-        )
+        parts.append(_disc("moon", x, y, _MOON_R * size / SIZE, MOON_FILL))
     if flags["show_times"]:
         parts.extend(_times(attrs, size, rim))
     nx, ny = point_at(0, rim + 14, size)
@@ -167,6 +159,24 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         f'fill="var(--primary-text-color)">N</text>'
     )
     return parts
+
+
+def _disc(name: str, x: float, y: float, radius: float, fill: str) -> str:
+    """A two-tone disc: full colour, with the right half washed white.
+
+    The same split Compass Card uses for its circle indicator. The right half
+    is the clockwise semicircle from the top of the disc, the side that faces
+    east when the disc sits on the rim.
+    """
+    top = y - radius
+    bottom = y + radius
+    return (
+        f'<g id="{name}">'
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{radius:.1f}" fill="{fill}"/>'
+        f'<path d="M {x:.1f} {top:.1f} A {radius:.1f} {radius:.1f} 0 0 1 '
+        f'{x:.1f} {bottom:.1f} Z" fill="#ffffff" fill-opacity="0.5"/>'
+        f"</g>"
+    )
 
 
 def _wedge(name, start, end, radius, fill, opacity, size, sun_clockwise) -> str:

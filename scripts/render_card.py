@@ -34,9 +34,7 @@ PALE = (246, 216, 74, 90)
 STRONG = (240, 180, 41, 184)
 HOUR = (196, 138, 18, 255)
 SUN = (245, 196, 0, 255)
-SUN_EDGE = (165, 107, 0, 255)
-MOON = (244, 247, 251, 255)
-MOON_EDGE = (138, 160, 184, 255)
+MOON = (197, 208, 220, 255)
 HOUSE_FILL = (247, 244, 239, 255)
 HOUSE_EDGE = (61, 74, 87, 255)
 
@@ -67,6 +65,22 @@ def _house(outline, size, rim) -> tuple[list[tuple[float, float]], float]:
     points = [(mid + east * scale, mid - north * scale) for east, north in outline]
     radius = max(math.hypot(x - mid, y - mid) for x, y in points)
     return points, radius
+
+
+def _disc(image: Image.Image, x: float, y: float, radius: float, fill) -> None:
+    """Full colour, then the right half washed white, matching the SVG disc."""
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=fill)
+    wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    # Pillow measures pieslice angles clockwise from 3 o'clock.
+    # 270° to 90° is the right-hand semicircle.
+    ImageDraw.Draw(wash).pieslice(
+        (x - radius, y - radius, x + radius, y + radius),
+        270,
+        90,
+        fill=(255, 255, 255, 128),
+    )
+    image.alpha_composite(wash)
 
 
 def _label(azimuth, size, rim) -> tuple[float, float]:
@@ -124,22 +138,10 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
     draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], rim, size)
-        radius = 7 * size / 320
-        draw.ellipse(
-            (x - radius, y - radius, x + radius, y + radius),
-            fill=SUN,
-            outline=SUN_EDGE,
-            width=width,
-        )
+        _disc(image, x, y, 7 * size / 320, SUN)
     if attrs.get("moon_elevation", -1) > 0:
         x, y = point_at(attrs["moon_azimuth"], 128 * size / 320, size)
-        radius = 6 * size / 320
-        draw.ellipse(
-            (x - radius, y - radius, x + radius, y + radius),
-            fill=MOON,
-            outline=MOON_EDGE,
-            width=width,
-        )
+        _disc(image, x, y, 6 * size / 320, MOON)
     font = ImageFont.truetype(str(FONT), int(13 * size / 320))
     with contextlib.suppress(OSError, AttributeError):
         font.set_variation_by_axes([600])

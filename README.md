@@ -11,7 +11,7 @@ angles the sun reaches today. The building outline comes from
 reads it from OpenStreetMap. The yellow wedge is every compass direction the
 sun passes while it is up. A stronger yellow runs from sunrise to where the
 sun is now. Hour lines mark each clock hour. A yellow disc sits on the rim at
-the sun, and a white disc sits just outside the rim at the moon, each only
+the sun, and a two-tone disc sits just outside the rim at the moon, each only
 while that body is above the horizon.
 
 North is up. The house is your building, not a generic box: House Structure
@@ -79,7 +79,7 @@ All four toggles default on. The visual editor has the same switches.
 
 | Toggle | Draws |
 | --- | --- |
-| Sun | The yellow disc on the rim, while the sun is above the horizon |
+| Sun | The two-tone yellow disc on the rim, while the sun is above the horizon |
 | Sunrise and sunset | Those clock times just outside the two edges of the wedge |
-| Moon | The white disc just outside the rim, while the moon is above the horizon |
+| Moon | The two-tone disc just outside the rim, while the moon is above the horizon |
 | Hour lines | A line at each local hour the sun is up, from the house out to the rim |

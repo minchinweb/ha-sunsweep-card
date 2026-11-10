@@ -23,7 +23,8 @@ STRONG_OPACITY = 0.72
 HOUR = "#c48a12"
 SUN_FILL = "#f5c400"
 SUN_STROKE = "#a56b00"
-MOON_FILL = "#f4f7fb"
+# Cool grey so the white half of the two-tone moon still reads.
+MOON_FILL = "#c5d0dc"
 MOON_STROKE = "#8aa0b8"
 HOUSE_FILL = "#f7f4ef"
 HOUSE_STROKE = "#3d4a57"
