@@ -115,6 +115,22 @@ class SunSweepCard extends LitElement {
     this.config = { ...config };
   }
 
+  shouldUpdate(changed) {
+    if (changed.has("config") || changed.has("_fixed") || changed.has("_loading")) {
+      return true;
+    }
+    if (!changed.has("hass")) return true;
+    const previous = changed.get("hass");
+    if (!previous) return true;
+    const entity = this.config?.entity || "sensor.sun_sweep";
+    return (
+      previous.states?.[entity] !== this.hass?.states?.[entity] ||
+      previous.locale !== this.hass?.locale ||
+      previous.themes !== this.hass?.themes ||
+      previous.config?.time_zone !== this.hass?.config?.time_zone
+    );
+  }
+
   willUpdate(changed) {
     if (changed.has("config") || changed.has("hass")) this._loadFixed();
   }
