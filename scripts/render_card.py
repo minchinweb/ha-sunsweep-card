@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 from PIL import Image, ImageDraw, ImageFont
 
-from custom_components.sun_sweep.drawing import card_svg, point_at
+from custom_components.sun_sweep.drawing import card_svg, label_baseline, point_at
 from custom_components.sun_sweep.sweep import (
     finish_snapshot,
     resolve_when,
@@ -103,13 +103,22 @@ def _along(azimuth, size, rim, house_radius) -> tuple[float, float, float]:
     return x, y, angle
 
 
-def _write_along(image, x, y, text, angle, font, fill) -> None:
-    """Draw ``text`` centred on ``(x, y)``, rotated clockwise by ``angle``."""
+def _write_along(image, x, y, text, angle, font, fill, *, glyphs_below: bool) -> None:
+    """Draw ``text`` rotated clockwise by ``angle``, with the spoke as its edge.
+
+    The anchor ``(x, y)`` is the middle of that edge. Letters sit on the usual
+    side of the baseline, or hang below it when ``glyphs_below`` is set, which
+    is how a time ends up just outside the wedge.
+    """
+    anchor = "mt" if glyphs_below else "ms"
     probe = ImageDraw.Draw(image)
-    box = probe.textbbox((0, 0), text, font=font)
-    pad = 8
-    layer = Image.new("RGBA", (box[2] - box[0] + pad * 2, box[3] - box[1] + pad * 2))
-    ImageDraw.Draw(layer).text((pad - box[0], pad - box[1]), text, font=font, fill=fill)
+    left, top, right, bottom = probe.textbbox((0, 0), text, font=font, anchor=anchor)
+    half = max(abs(left), abs(right), abs(top), abs(bottom)) + 4
+    side = math.ceil(half * 2)
+    layer = Image.new("RGBA", (side, side))
+    ImageDraw.Draw(layer).text(
+        (side / 2, side / 2), text, font=font, fill=fill, anchor=anchor
+    )
     spun = layer.rotate(-angle, expand=True, resample=Image.Resampling.BICUBIC)
     image.alpha_composite(spun, (round(x - spun.width / 2), round(y - spun.height / 2)))
 
@@ -159,14 +168,9 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
             ),
             fill=STRONG,
         )
-    draw.ellipse(
-        (mid - ring, mid - ring, mid + ring, mid + ring),
-        outline=RING,
-        width=max(3, round(3 * size / 320)),
-    )
     house, house_radius = _house(attrs["outline"], size, rim)
     if attrs.get("hour_azimuths"):
-        width = max(2, int(size / 220))
+        width = max(2, round(1.5 * size / 320))
         for mark in attrs["hour_azimuths"]:
             hour = int(str(mark["time"])[:2])
             if hour == 12:
@@ -175,14 +179,20 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
                 inner = house_radius * 0.45
             else:
                 inner = min(house_radius + 6 * size / 320, rim - 8 * size / 320)
+            weight = max(4, round(4 * size / 320)) if hour == 12 else width
             draw.line(
                 [
                     point_at(mark["azimuth"], inner, size),
                     point_at(mark["azimuth"], rim, size),
                 ],
                 fill=HOUR,
-                width=width,
+                width=weight,
             )
+    draw.ellipse(
+        (mid - ring, mid - ring, mid + ring, mid + ring),
+        outline=RING,
+        width=max(3, round(3 * size / 320)),
+    )
     width = max(2, int(size / 160))
     draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
     draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
@@ -200,7 +210,21 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
         if not attrs.get(key) or attrs.get(azimuth_key) is None:
             continue
         x, y, angle = _along(attrs[azimuth_key], size, rim, house_radius)
-        _write_along(image, x, y, _clock(attrs[key]), angle, font, INK)
+        baseline = label_baseline(
+            attrs[azimuth_key],
+            sunrise=key == "sunrise",
+            sun_clockwise=attrs.get("sun_clockwise", True),
+        )
+        _write_along(
+            image,
+            x,
+            y,
+            _clock(attrs[key]),
+            angle,
+            font,
+            INK,
+            glyphs_below=baseline == "text-before-edge",
+        )
     nx, ny = point_at(0, ring - 18 * size / 320, size)
     draw.text((nx, ny + 4 * size / 320), "N", font=font, fill=INK, anchor="mm")
     rotation = float((options or {}).get("rotation") or 0)
@@ -223,7 +247,7 @@ def main() -> None:
     parser.add_argument("--name", default="preview", help="File name for one picture")
     args = parser.parse_args()
     if args.date:
-        when = resolve_when(datetime.now(ZONE), args.date, args.time)
+        when = resolve_when(datetime.now(ZONE), args.date, args.time, LAT)
         scenes = ((args.name, when, HOUSE, None),)
     else:
         scenes = SCENES

@@ -208,53 +208,74 @@ def day_sweep(when: datetime, latitude: float, longitude: float) -> Sweep:
     )
 
 
-_EQUINOX = {
+# Month names stay on that month. Season names follow the hemisphere.
+_SEASON = {
     "march-equinox": "march",
+    "june-solstice": "june",
+    "september-equinox": "september",
+    "december-solstice": "december",
     "vernal-equinox": "march",
     "spring-equinox": "march",
-    "september-equinox": "september",
+    "summer-solstice": "june",
     "autumnal-equinox": "september",
     "autumn-equinox": "september",
     "fall-equinox": "september",
+    "winter-solstice": "december",
+}
+_SOUTHERN = {
+    "vernal-equinox": "september",
+    "spring-equinox": "september",
+    "summer-solstice": "december",
+    "autumnal-equinox": "march",
+    "autumn-equinox": "march",
+    "fall-equinox": "march",
+    "winter-solstice": "june",
+}
+
+# Meeus, Astronomical Algorithms, for the years 1000 to 3000.
+# JDE = a + b Y + c Y² + d Y³ + e Y⁴, with Y = (year - 2000) / 1000.
+_SEASON_TERMS = {
+    "march": (2451623.80984, 365242.37404, 0.05169, -0.00411, -0.00057),
+    "june": (2451716.56767, 365241.62603, 0.00325, 0.00888, -0.00030),
+    "september": (2451810.21715, 365242.01767, -0.11575, 0.00337, 0.00078),
+    "december": (2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032),
 }
 
 
-def equinox(year: int, which: str) -> datetime:
-    """The March or September equinox, in UTC, to about a minute.
+def season(year: int, which: str) -> datetime:
+    """An equinox or a solstice, in UTC, to about a minute.
 
-    Meeus's polynomial for the years 1000 to 3000. The result is terrestrial
-    time less 69 seconds, the leap-second offset through the 2020s.
+    ``which`` is ``march``, ``june``, ``september``, or ``december``. The
+    result is Meeus's terrestrial time less 69 seconds, the leap-second
+    offset through the 2020s.
     """
     y = (year - 2000) / 1000
-    if which == "march":
-        jde = (
-            2451623.80984
-            + 365242.37404 * y
-            + 0.05169 * y * y
-            - 0.00411 * y**3
-            - 0.00057 * y**4
-        )
-    else:
-        jde = (
-            2451810.21715
-            + 365242.01767 * y
-            - 0.11575 * y * y
-            + 0.00337 * y**3
-            + 0.00078 * y**4
-        )
+    a, b, c, d, e = _SEASON_TERMS[which]
+    jde = a + b * y + c * y * y + d * y**3 + e * y**4
     moment = datetime(2000, 1, 1, 12, tzinfo=UTC) + timedelta(days=jde - 2451545.0)
     return moment - timedelta(seconds=69)
 
 
-def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> datetime:
+def resolve_when(
+    now: datetime,
+    date: str | None,
+    clock: str | None = None,
+    latitude: float | None = None,
+) -> datetime:
     """The moment a pinned card should draw.
 
     Args:
         now: The live local time. Its clock is kept when ``date`` is only a day.
-        date: ``YYYY-MM-DD``, a full ISO datetime, ``march-equinox``, or
-            ``september-equinox``. Empty means ``now``.
-        clock: ``HH:MM``, used with a bare date or an equinox. Ignored when
-            ``date`` already has a time.
+        date: ``YYYY-MM-DD``, a full ISO datetime, an equinox
+            (``march-equinox``, ``september-equinox``), or a solstice
+            (``june-solstice``, ``december-solstice``). Season names
+            (``spring``, ``summer``, ``autumn``, ``winter``) follow ``latitude``.
+            Empty means ``now``.
+        clock: ``HH:MM``, used with a bare date, an equinox, or a solstice.
+            Ignored when ``date`` already has a time.
+        latitude: Home latitude. South of the equator, summer is December and
+            winter is June, and spring and autumn swap with them. North of it,
+            and when this is left out, the northern seasons are used.
 
     Raises:
         ValueError: The date or the clock cannot be read.
@@ -262,9 +283,13 @@ def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> d
     if not date or not str(date).strip():
         return now
     text = str(date).strip()
-    which = _EQUINOX.get(text.lower().replace(" ", "-"))
+    key = text.lower().replace(" ", "-")
+    if latitude is not None and latitude < 0 and key in _SOUTHERN:
+        which = _SOUTHERN[key]
+    else:
+        which = _SEASON.get(key)
     if which:
-        local = equinox(now.year, which).astimezone(now.tzinfo)
+        local = season(now.year, which).astimezone(now.tzinfo)
         text = local.date().isoformat()
     if "T" in text:
         parsed = datetime.fromisoformat(text)

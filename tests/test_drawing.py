@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from custom_components.sun_sweep.drawing import card_svg, point_at
+from custom_components.sun_sweep.drawing import card_svg, label_baseline, point_at
 
 HOUSE = [[-5, -4], [5, -4], [5, 4], [-5, 4]]
 
@@ -46,7 +46,7 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert svg.count('transform="rotate(') == 2
     assert ">N<" in svg
     assert 'id="ring"' in svg and 'stroke="#111111"' in svg
-    assert svg.index('id="hours"') < svg.index('id="house"')
+    assert svg.index('id="hours"') < svg.index('id="ring"') < svg.index('id="house"')
     end = point_at(313.5, 128)
     assert f"{end[0]:.1f}" in svg
     sun = point_at(SUMMER["sun_azimuth"], 128)
@@ -66,9 +66,15 @@ def test_noon_reaches_the_centre_and_every_third_hour_runs_longer():
     }
     svg = card_svg(marked)
     assert 'x1="160.0" y1="160.0"' in svg
+    lines = re.findall(r"<line [^>]*>", svg)
     inners = []
-    for x1, y1 in re.findall(r'<line x1="([\d.]+)" y1="([\d.]+)"', svg):
+    for line in lines:
+        x1, y1 = re.search(r'x1="([\d.]+)" y1="([\d.]+)"', line).groups()
         inners.append(math.hypot(float(x1) - 160, float(y1) - 160))
+        if x1 == "160.0" and y1 == "160.0":
+            assert 'stroke-width="4"' in line
+        else:
+            assert 'stroke-width="1.5"' in line
     inners.sort()
     assert inners[0] == pytest.approx(0, abs=0.05)
     assert inners[1] < inners[2]
@@ -130,6 +136,22 @@ def test_toggles_drop_their_marks():
     assert 'id="hours"' not in svg
     assert "5:04 AM" not in svg
     assert 'id="pale"' in svg and 'id="house"' in svg
+
+
+def test_times_sit_outside_the_wedge_on_the_spoke():
+    svg = card_svg(SUMMER)
+    assert 'dominant-baseline="middle"' not in svg
+    for ident in ("sunrise", "sunset"):
+        tag = re.search(rf'<text id="{ident}"[^>]*>', svg).group(0)
+        assert 'text-anchor="middle"' in tag
+        assert 'dominant-baseline="alphabetic"' in tag
+    west_rise = card_svg({**SUMMER, "sunrise_azimuth": 200.0})
+    rise = re.search(r'<text id="sunrise"[^>]*>', west_rise).group(0)
+    assert 'dominant-baseline="text-before-edge"' in rise
+    south = card_svg({**SUMMER, "sun_clockwise": False})
+    assert south.count('dominant-baseline="text-before-edge"') == 2
+    assert label_baseline(46.5, sunrise=True, sun_clockwise=True) == "alphabetic"
+    assert label_baseline(313.5, sunrise=False, sun_clockwise=True) == "alphabetic"
 
 
 def test_a_rotation_turns_the_whole_picture():

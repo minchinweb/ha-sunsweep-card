@@ -69,6 +69,14 @@ function along(azimuth, houseRadius) {
   return [x, y, angle];
 }
 
+/** Matches drawing.label_baseline: the spoke is the baseline, letters outside. */
+function labelBaseline(azimuth, sunrise, sunClockwise) {
+  const turned = (((azimuth - 90) % 360) + 360) % 360;
+  const alphabeticIsClockwise = turned > 90 && turned < 270;
+  const outsideIsClockwise = sunrise ? !sunClockwise : sunClockwise;
+  return alphabeticIsClockwise === outsideIsClockwise ? "alphabetic" : "text-before-edge";
+}
+
 class SunSweepCard extends LitElement {
   static properties = { hass: {}, config: {}, _fixed: { state: true } };
 
@@ -163,7 +171,6 @@ class SunSweepCard extends LitElement {
     } else if (attrs.strong_start != null) {
       parts.push(wedge("strong", attrs.strong_start, attrs.strong_end, RING_R, STRONG, 0.72, sunClockwise));
     }
-    parts.push(svg`<circle id="ring" cx="160" cy="160" r=${RING_R} fill="none" stroke=${RING} stroke-width="3"></circle>`);
     const outline = attrs.outline;
     const easts = outline.map((p) => p[0]);
     const norths = outline.map((p) => p[1]);
@@ -184,12 +191,14 @@ class SunSweepCard extends LitElement {
     if (this._on("show_hours") && attrs.hour_azimuths?.length) {
       const lines = attrs.hour_azimuths.map((mark) => {
         const inner = hourInner(mark.time, houseRadius);
+        const width = Number(String(mark.time).slice(0, 2)) === 12 ? 4 : 1.5;
         const [x1, y1] = pointAt(mark.azimuth, inner);
         const [x2, y2] = pointAt(mark.azimuth, RING_R);
-        return svg`<line x1=${x1.toFixed(1)} y1=${y1.toFixed(1)} x2=${x2.toFixed(1)} y2=${y2.toFixed(1)} stroke=${HOUR} stroke-width="1.5"></line>`;
+        return svg`<line x1=${x1.toFixed(1)} y1=${y1.toFixed(1)} x2=${x2.toFixed(1)} y2=${y2.toFixed(1)} stroke=${HOUR} stroke-width=${width}></line>`;
       });
       parts.push(svg`<g id="hours">${lines}</g>`);
     }
+    parts.push(svg`<circle id="ring" cx="160" cy="160" r=${RING_R} fill="none" stroke=${RING} stroke-width="3"></circle>`);
     parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_sun") && attrs.sun_elevation > 0) {
       const [x, y] = pointAt(attrs.sun_azimuth, RING_R);
@@ -206,9 +215,10 @@ class SunSweepCard extends LitElement {
       ]) {
         if (!attrs[key] || attrs[az] == null) continue;
         const [x, y, angle] = along(attrs[az], houseRadius);
+        const baseline = labelBaseline(attrs[az], id === "sunrise", sunClockwise);
         const xf = x.toFixed(1);
         const yf = y.toFixed(1);
-        parts.push(svg`<text id=${id} x=${xf} y=${yf} text-anchor="middle" dominant-baseline="middle" transform="rotate(${angle.toFixed(1)} ${xf} ${yf})">${this._clock(attrs[key])}</text>`);
+        parts.push(svg`<text id=${id} x=${xf} y=${yf} text-anchor="middle" dominant-baseline=${baseline} transform="rotate(${angle.toFixed(1)} ${xf} ${yf})">${this._clock(attrs[key])}</text>`);
       }
     }
     const [nx, ny] = pointAt(0, RING_R - 18);
@@ -311,7 +321,7 @@ class SunSweepCardEditor extends LitElement {
             show_hours: "Hour lines",
             show_twilight: "Twilight",
             rotation: "Rotation",
-            date: "Date (YYYY-MM-DD, march-equinox, september-equinox)",
+            date: "Date (YYYY-MM-DD, equinox, or solstice)",
             time: "Time (HH:MM)",
           })[item.name]}
         @value-changed=${this._changed}

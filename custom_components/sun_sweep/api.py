@@ -29,7 +29,7 @@ async def ws_snapshot(hass: HomeAssistant, connection, msg: dict) -> None:
 
     def build() -> dict:
         now = datetime.now(ZoneInfo(hass.config.time_zone))
-        when = resolve_when(now, msg.get("date"), msg.get("time"))
+        when = resolve_when(now, msg.get("date"), msg.get("time"), hass.config.latitude)
         info = hass.data.get(OUTLINE_DATA) or {}
         points = [] if info.get("failed") else info.get("points") or []
         return finish_snapshot(

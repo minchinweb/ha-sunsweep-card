@@ -14,10 +14,12 @@ square instead.
 A black ring circles the disc, and the wedges run out to it. North sits just
 inside it. Pale yellow is every compass direction the sun passes while it is
 up. A stronger yellow runs from sunrise to where the sun is now. Blue-grey
-shoulders on either side are civil twilight. Sunrise and sunset are written
-along those two edges. Hour lines mark each clock hour the sun is up: noon
-runs to the centre, and every third hour reaches further in than the hours
-between. The house is drawn on top, so the lines stop at the walls. The sun
+shoulders on either side are civil twilight. Sunrise and sunset sit just
+outside those two edges, each edge the baseline of its time. Hour lines mark
+each clock hour the sun is up: noon runs to the centre and is drawn heavier
+than the three-hour lines, and every third hour reaches further in than the
+hours between. The house is drawn on top, so the lines stop at the walls, and
+the heavy noon spoke is still the one that stands out. The sun
 and the moon are two-tone discs centred on the ring, each only while that
 body is above the horizon.
 
@@ -113,4 +115,4 @@ keeps the card on the live clock. The visual editor has the same controls.
 | Hour lines | A line at each local hour the sun is up. Noon reaches the centre, and every third hour is longer, but the house covers whatever falls inside the walls |
 | Twilight | A blue-grey wedge from civil dawn to civil dusk, under the daylight |
 | Rotation | Degrees clockwise to turn the whole card. North stays the geographic north of the drawing |
-| Date and time | Pin the drawing to `YYYY-MM-DD`, `march-equinox`, or `september-equinox`, and an optional `HH:MM`. The sensor stays on the live clock |
+| Date and time | Pin the drawing to `YYYY-MM-DD`, an equinox (`march-equinox`, `september-equinox`), or a solstice (`june-solstice`, `december-solstice`), and an optional `HH:MM`. `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere. The sensor stays on the live clock |

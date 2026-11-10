@@ -150,6 +150,26 @@ def test_an_equinox_is_that_day_in_the_home_year():
     assert (september.hour, september.minute) == (9, 30)
 
 
+def test_a_solstice_is_that_day_in_the_home_year():
+    now = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    june = resolve_when(now, "june-solstice", "12:00", LAT)
+    december = resolve_when(now, "winter solstice", None, LAT)
+    assert (june.month, june.day, june.hour) == (6, 21, 12)
+    assert (december.month, december.day) == (12, 21)
+    assert (december.hour, december.minute) == (9, 30)
+
+
+def test_season_names_follow_the_hemisphere():
+    now = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    south = -33.9
+    assert resolve_when(now, "summer-solstice", "12:00", south).month == 12
+    assert resolve_when(now, "winter-solstice", "12:00", south).month == 6
+    assert resolve_when(now, "spring-equinox", "12:00", south).month == 9
+    assert resolve_when(now, "autumn-equinox", "12:00", south).month == 3
+    assert resolve_when(now, "march-equinox", "12:00", south).month == 3
+    assert resolve_when(now, "june-solstice", "12:00", south).month == 6
+
+
 def test_without_house_structure_the_outline_is_a_ten_metre_square():
     when = _at(EDMONTON, 2026, 6, 21, 9, 30)
     attrs = finish_snapshot(when, LAT, LON, None, house_structure=False)

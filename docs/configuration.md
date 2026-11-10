@@ -38,17 +38,17 @@ as leaving it on.
 | --- | --- | --- |
 | `entity` | `sensor.sun_sweep` | The sensor this integration creates |
 | `show_sun` | on | A two-tone yellow disc centred on the black ring at the sun's compass bearing, only while the sun is above the horizon |
-| `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written along the two edges of the wedge |
+| `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written just outside the two edges of the wedge, with each edge as the baseline |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
-| `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. Every third hour runs further in. The house is drawn on top, so the lines do not show inside the walls |
+| `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre and is drawn heavier than the three-hour lines. Every third hour runs further in. The house is drawn on top, so the lines stop at the walls and noon still reads as the heavy spoke |
 | `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
 | `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways |
-| `date` | | Pin the card to `YYYY-MM-DD`, a full ISO datetime, `march-equinox`, or `september-equinox` (this year, at home). The sensor itself stays live. Leave this out for today |
+| `date` | | Pin the card to `YYYY-MM-DD`, a full ISO datetime, `march-equinox`, `june-solstice`, `september-equinox`, or `december-solstice` (this year, at home). `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere: summer is June in the north and December in the south. The sensor itself stays live. Leave this out for today |
 | `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day |
 
 A black ring circles the disc, and the daylight and twilight wedges run out to it.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
-wedge stays visible around it. Noon and every third hour are drawn further in than the other hours, and the house covers the part of a line that falls inside the walls.
+wedge stays visible around it. Noon and every third hour are drawn further in than the other hours. Noon is the heavy stroke. The house covers the part of a line that falls inside the walls.
 
 ## How to read the wedge
 

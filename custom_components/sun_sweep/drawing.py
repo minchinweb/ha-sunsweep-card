@@ -98,7 +98,7 @@ def _message(size: int, text: str) -> str:
 
 
 def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
-    """Wedges out to the ring, then the hours, then the house on top of them."""
+    """Wedges, then the hours, then the ring over their ends, then the house."""
     parts: list[str] = []
     ring = _RING * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
@@ -170,22 +170,23 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 sun_clockwise,
             )
         )
-    parts.append(
-        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
-        f'fill="none" stroke="{RING}" stroke-width="3"/>'
-    )
     house = _house(attrs["outline"], size, ring)
     if flags["show_hours"] and attrs.get("hour_azimuths"):
         lines = []
         for mark in attrs["hour_azimuths"]:
             inner = _hour_inner(mark["time"], house[1], ring, size)
+            width = 4 if int(str(mark["time"])[:2]) == 12 else 1.5
             x1, y1 = point_at(mark["azimuth"], inner, size)
             x2, y2 = point_at(mark["azimuth"], ring, size)
             lines.append(
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
-                f'stroke="{HOUR}" stroke-width="1.5"/>'
+                f'stroke="{HOUR}" stroke-width="{width}"/>'
             )
         parts.append(f'<g id="hours">{"".join(lines)}</g>')
+    parts.append(
+        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
+        f'fill="none" stroke="{RING}" stroke-width="3"/>'
+    )
     parts.append(house[0])
     if flags["show_sun"] and attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], ring, size)
@@ -206,9 +207,11 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
 def _hour_inner(clock: str, house_radius: float, rim: float, size: int) -> float:
     """How close to the centre an hour line starts.
 
-    Noon runs to the centre. Every third hour starts further in than the
-    others. The house is drawn afterwards, so none of the lines show inside
-    the walls. All of them end on the ring.
+    Noon runs to the centre and is stroked heavier than the others, so it
+    still stands out where the house covers the inner lengths. Every third
+    hour starts further in than the hours between. The house is drawn
+    afterwards, so none of the lines show inside the walls. All of them end
+    on the ring.
     """
     hour = int(str(clock)[:2])
     if hour == 12:
@@ -280,8 +283,9 @@ def _house(outline: list, size: int, rim: float) -> tuple[str, float]:
 
 
 def _times(attrs: dict, size: int, rim: float, house_radius: float) -> list[str]:
-    """Sunrise and sunset, rotated to lie along those two edges of the wedge."""
+    """Sunrise and sunset, with each edge of the wedge as the baseline."""
     labels = []
+    sun_clockwise = bool(attrs.get("sun_clockwise", True))
     for key, az_key, ident in (
         ("sunrise", "sunrise_azimuth", "sunrise"),
         ("sunset", "sunset_azimuth", "sunset"),
@@ -289,10 +293,14 @@ def _times(attrs: dict, size: int, rim: float, house_radius: float) -> list[str]
         if not attrs.get(key) or attrs.get(az_key) is None:
             continue
         text = _clock(attrs[key])
-        x, y, angle = _along(attrs[az_key], size, rim, house_radius)
+        azimuth = attrs[az_key]
+        x, y, angle = _along(azimuth, size, rim, house_radius)
+        baseline = label_baseline(
+            azimuth, sunrise=key == "sunrise", sun_clockwise=sun_clockwise
+        )
         labels.append(
             f'<text id="{ident}" x="{x:.1f}" y="{y:.1f}" text-anchor="middle" '
-            f'dominant-baseline="middle" fill="var(--primary-text-color)" '
+            f'dominant-baseline="{baseline}" fill="var(--primary-text-color)" '
             f'transform="rotate({angle:.1f} {x:.1f} {y:.1f})">{text}</text>'
         )
     return labels
@@ -305,14 +313,30 @@ def _clock(iso: str) -> str:
     return text.removeprefix("0")
 
 
+def label_baseline(azimuth: float, *, sunrise: bool, sun_clockwise: bool) -> str:
+    """The baseline that lays a time just outside the daylight wedge.
+
+    Upright text that reads outward sits on the counter-clockwise side of its
+    spoke. The flip that keeps it upright moves the letters to the clockwise
+    side. Use the alphabetic baseline when that side is already outside the
+    wedge, and the top of the letters when they have to hang the other way.
+    """
+    flipped = 90 < (azimuth - 90) % 360 < 270
+    alphabetic_is_clockwise = flipped
+    outside_is_clockwise = not sun_clockwise if sunrise else sun_clockwise
+    if alphabetic_is_clockwise == outside_is_clockwise:
+        return "alphabetic"
+    return "text-before-edge"
+
+
 def _along(
     azimuth: float, size: int, rim: float, house_radius: float
 ) -> tuple[float, float, float]:
-    """A point on the spoke, and the clockwise rotation that lays text along it.
+    """A point on the spoke, and the clockwise rotation that keeps text upright.
 
-    The words stay inside the wedge, clear of the house and of the ring. When
-    laying them outward would turn them upside down, they flip so they stay
-    readable.
+    The anchor is the middle of the baseline, clear of the house and of the
+    ring. ``label_baseline`` puts the letters on the outside of the wedge.
+    When laying them outward would turn them upside down, they flip.
     """
     outward = rim - 36 * size / SIZE
     radius = min(outward, max(house_radius + 16 * size / SIZE, rim * 0.62))
