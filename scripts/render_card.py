@@ -145,11 +145,11 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
     draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
     draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("sun_elevation", -1) > 0:
-        x, y = point_at(attrs["sun_azimuth"], rim, size)
-        _disc(image, x, y, 7 * size / 320, SUN)
+        x, y = point_at(attrs["sun_azimuth"], ring, size)
+        _disc(image, x, y, 8 * size / 320, SUN)
     if attrs.get("moon_elevation", -1) > 0:
-        x, y = point_at(attrs["moon_azimuth"], 128 * size / 320, size)
-        _disc(image, x, y, 6 * size / 320, MOON)
+        x, y = point_at(attrs["moon_azimuth"], ring, size)
+        _disc(image, x, y, 7 * size / 320, MOON)
     font = ImageFont.truetype(str(FONT), int(13 * size / 320))
     with contextlib.suppress(OSError, AttributeError):
         font.set_variation_by_axes([600])

@@ -29,9 +29,8 @@ from .sweep import travel
 SIZE = 320
 _RIM = 112.0
 _RING = 128.0
-_MOON_RIM = 128.0
-_SUN_R = 7.0
-_MOON_R = 6.0
+_SUN_R = 8.0
+_MOON_R = 7.0
 
 
 def point_at(azimuth: float, radius: float, size: int = SIZE) -> tuple[float, float]:
@@ -153,10 +152,10 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         parts.append(f'<g id="hours">{"".join(lines)}</g>')
     parts.append(house[0])
     if flags["show_sun"] and attrs.get("sun_elevation", -1) > 0:
-        x, y = point_at(attrs["sun_azimuth"], rim, size)
+        x, y = point_at(attrs["sun_azimuth"], ring, size)
         parts.append(_disc("sun", x, y, _SUN_R * size / SIZE, SUN_FILL))
     if flags["show_moon"] and attrs.get("moon_elevation", -1) > 0:
-        x, y = point_at(attrs["moon_azimuth"], _MOON_RIM * size / SIZE, size)
+        x, y = point_at(attrs["moon_azimuth"], ring, size)
         parts.append(_disc("moon", x, y, _MOON_R * size / SIZE, MOON_FILL))
     if flags["show_times"]:
         parts.extend(_times(attrs, size, rim))

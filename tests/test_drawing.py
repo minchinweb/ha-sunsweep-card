@@ -42,6 +42,10 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert 'id="ring"' in svg and 'stroke="#111111"' in svg
     end = point_at(313.5, 112)
     assert f"{end[0]:.1f}" in svg
+    sun = point_at(SUMMER["sun_azimuth"], 128)
+    moon = point_at(SUMMER["moon_azimuth"], 128)
+    assert f'cx="{sun[0]:.1f}"' in svg
+    assert f'cx="{moon[0]:.1f}"' in svg
 
 
 def test_a_short_winter_arc_is_the_minor_one():

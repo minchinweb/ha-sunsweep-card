@@ -9,7 +9,6 @@ const DOCS =
 const SIZE = 320;
 const RIM = 112;
 const RING_R = 128;
-const MOON_RIM = 128;
 const PALE = "#f6d84a";
 const STRONG = "#f0b429";
 const HOUR = "#c48a12";
@@ -147,12 +146,12 @@ class SunSweepCard extends LitElement {
     const points = house.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
     parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_sun") && attrs.sun_elevation > 0) {
-      const [x, y] = pointAt(attrs.sun_azimuth, RIM);
-      parts.push(disc("sun", x, y, 7, "#f5c400"));
+      const [x, y] = pointAt(attrs.sun_azimuth, RING_R);
+      parts.push(disc("sun", x, y, 8, "#f5c400"));
     }
     if (this._on("show_moon") && attrs.moon_elevation > 0) {
-      const [x, y] = pointAt(attrs.moon_azimuth, MOON_RIM);
-      parts.push(disc("moon", x, y, 6, "#c5d0dc"));
+      const [x, y] = pointAt(attrs.moon_azimuth, RING_R);
+      parts.push(disc("moon", x, y, 7, "#c5d0dc"));
     }
     if (this._on("show_times")) {
       for (const [key, az, id] of [

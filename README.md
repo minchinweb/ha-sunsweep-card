@@ -10,9 +10,9 @@ angles the sun reaches today. The building outline comes from
 [House Structure](https://github.com/minchinweb/ha-house-structure), which
 reads it from OpenStreetMap. The yellow wedge is every compass direction the
 sun passes while it is up. A stronger yellow runs from sunrise to where the
-sun is now. Hour lines mark each clock hour. A yellow disc sits on the rim at
-the sun, and a two-tone disc sits just outside the rim at the moon, each only
-while that body is above the horizon.
+sun is now. Hour lines mark each clock hour. The sun and the moon are
+two-tone discs centred on the black ring, each only while that body is above
+the horizon.
 
 A black ring circles the disc. North is up. The house is your building, not a generic box: House Structure
 fetches the footprint (Nominatim, then Overpass) and Sun Sweep reads the ring
@@ -23,7 +23,7 @@ plain rectangle standing in for the footprint. On your dashboard the polygon
 is the building OpenStreetMap has at your home coordinates.
 
 A mid-morning in June. The stronger yellow is the part of the day already
-past; the sun is on the rim at the boundary.
+past; the sun rides the ring at the boundary.
 
 ![A wide summer wedge, partly swept, with the sun and the moon](docs/images/summer-morning.png)
 
@@ -34,7 +34,7 @@ A winter afternoon. The wedge is the short southern arc.
 After sunset the whole wedge stays, fully swept, and the sun is gone. The
 moon is drawn only because it is still up.
 
-![The full wedge after sunset, with no sun and the moon outside the rim](docs/images/after-sunset.png)
+![The full wedge after sunset, with no sun and the moon on the ring](docs/images/after-sunset.png)
 
 ## Installation
 
@@ -79,7 +79,7 @@ All four toggles default on. The visual editor has the same switches.
 
 | Toggle | Draws |
 | --- | --- |
-| Sun | The two-tone yellow disc on the rim, while the sun is above the horizon |
+| Sun | The two-tone yellow disc on the ring, while the sun is above the horizon |
 | Sunrise and sunset | Those clock times just outside the two edges of the wedge |
-| Moon | The two-tone disc just outside the rim, while the moon is above the horizon |
+| Moon | The two-tone disc on the ring, while the moon is above the horizon |
 | Hour lines | A line at each local hour the sun is up, from the house out to the rim |
