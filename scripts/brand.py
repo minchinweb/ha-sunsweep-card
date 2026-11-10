@@ -94,9 +94,14 @@ def draw_mark(image: Image.Image, centre: float, rim: float, dark: bool) -> None
     fill = (36, 48, 64, 255) if dark else (247, 244, 239, 255)
     edge = (244, 247, 251, 255) if dark else (61, 74, 87, 255)
     draw.polygon(house, fill=fill)
+    # The stroke starts and ends on the lower-left corner. A disc on every
+    # corner closes that joint; the line alone leaves it half open.
     draw.line([*house, house[0]], fill=edge, width=house_width, joint="curve")
+    cap = house_width / 2
+    for x, y in house:
+        draw.ellipse((x - cap, y - cap, x + cap, y + cap), fill=edge)
     sun = _at(NOW, rim, centre)
-    radius = max(4, int(rim / 11))
+    radius = max(6, round(rim / 6))
     draw.ellipse(
         (sun[0] - radius, sun[1] - radius, sun[0] + radius, sun[1] + radius),
         fill=SUN,
@@ -176,6 +181,7 @@ def _svg(dark: bool) -> str:
     centre, rim = 256.0, 184.0
     sun = _at(NOW, rim, centre)
     ring, halo, house_width = _weights(rim)
+    sun_r = max(6, round(rim / 6))
     outer = rim + halo / 2
     points = [
         *_sector(RISE, SET, rim, centre),
@@ -184,10 +190,10 @@ def _svg(dark: bool) -> str:
         (centre + outer, centre),
         (centre, centre - outer),
         (centre, centre + outer),
-        (sun[0] - 24, sun[1]),
-        (sun[0] + 24, sun[1]),
-        (sun[0], sun[1] - 24),
-        (sun[0], sun[1] + 24),
+        (sun[0] - sun_r, sun[1]),
+        (sun[0] + sun_r, sun[1]),
+        (sun[0], sun[1] - sun_r),
+        (sun[0], sun[1] + sun_r),
     ]
     pad = 4.0
     left = min(point[0] for point in points) - pad
@@ -210,7 +216,7 @@ def _svg(dark: bool) -> str:
         f'stroke="#111111" stroke-width="{ring}"/>'
         f'<polygon points="{house}" fill="{fill}" stroke="{edge}" '
         f'stroke-width="{house_width}"/>'
-        f'<circle cx="{sun[0]:.1f}" cy="{sun[1]:.1f}" r="18" fill="#f5c400" '
+        f'<circle cx="{sun[0]:.1f}" cy="{sun[1]:.1f}" r="{sun_r}" fill="#f5c400" '
         f'stroke="#a56b00" stroke-width="6"/></svg>\n'
     )
 
