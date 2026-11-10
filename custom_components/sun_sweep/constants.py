@@ -1,0 +1,32 @@
+# Copyright (c) 2026 MinchinWeb
+"""Names and colours shared by the integration and the card drawing."""
+
+from __future__ import annotations
+
+DOMAIN = "sun_sweep"
+PLATFORMS = ["sensor"]
+
+# House Structure keeps the building ring here (latitude, longitude corners).
+OUTLINE_DATA = "house_structure_outline"
+
+CARD_PATH = "/sun_sweep_static"
+CARD_URL = f"{CARD_PATH}/sun-sweep-card.js"
+DOCS = (
+    "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md"
+)
+
+# The card draws these, in this order. drawing.py is the reference.
+PALE = "#f6d84a"
+PALE_OPACITY = 0.35
+STRONG = "#f0b429"
+STRONG_OPACITY = 0.72
+HOUR = "#c48a12"
+SUN_FILL = "#f5c400"
+SUN_STROKE = "#a56b00"
+MOON_FILL = "#f4f7fb"
+MOON_STROKE = "#8aa0b8"
+HOUSE_FILL = "#f7f4ef"
+HOUSE_STROKE = "#3d4a57"
+
+ABOVE = "above_horizon"
+BELOW = "below_horizon"

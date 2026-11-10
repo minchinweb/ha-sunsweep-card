@@ -1,0 +1,85 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="custom_components/sun_sweep/brand/dark_logo@2x.png">
+  <img alt="Sun Sweep" src="custom_components/sun_sweep/brand/logo@2x.png" height="64">
+</picture>
+
+# Sun Sweep
+
+A Home Assistant card that looks straight down on your house and draws the
+angles the sun reaches today. The building outline comes from
+[House Structure](https://github.com/minchinweb/ha-house-structure), which
+reads it from OpenStreetMap. The yellow wedge is every compass direction the
+sun passes while it is up. A stronger yellow runs from sunrise to where the
+sun is now. Hour lines mark each clock hour. A yellow disc sits on the rim at
+the sun, and a white disc sits just outside the rim at the moon, each only
+while that body is above the horizon.
+
+North is up. The house is your building, not a generic box: House Structure
+fetches the footprint (Nominatim, then Overpass) and Sun Sweep reads the ring
+it keeps.
+
+The pictures below are the card's own drawing for a house in Edmonton, with a
+plain rectangle standing in for the footprint. On your dashboard the polygon
+is the building OpenStreetMap has at your home coordinates.
+
+A mid-morning in June. The stronger yellow is the part of the day already
+past; the sun is on the rim at the boundary.
+
+![A wide summer wedge, partly swept, with the sun and the moon](docs/images/summer-morning.png)
+
+A winter afternoon. The wedge is the short southern arc.
+
+![A short winter wedge, mostly swept, sun low in the southwest](docs/images/winter-afternoon.png)
+
+After sunset the whole wedge stays, fully swept, and the sun is gone. The
+moon is drawn only because it is still up.
+
+![The full wedge after sunset, with no sun and the moon outside the rim](docs/images/after-sunset.png)
+
+## Installation
+
+House Structure has to be installed first, and it has to have found a building
+at your home position. Sun Sweep does not call OpenStreetMap itself.
+
+[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=minchinweb&repository=ha-sunsweep-card&category=integration)
+
+1. Click the button above. It opens this repository in the Marketplace
+   (**Settings > Marketplace**, Home Assistant 2026.11 and later). By hand:
+   choose **Add from link** and enter
+   `https://github.com/minchinweb/ha-sunsweep-card`.
+2. Click **Install**. Restart Home Assistant if the Marketplace says to.
+3. Add the integration:
+
+   [![Open your Home Assistant instance and start setting up this integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=sun_sweep)
+
+Before Home Assistant 2026.11, install it with
+[HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=minchinweb&repository=ha-sunsweep-card&category=integration)
+instead. Without either, copy `custom_components/sun_sweep/` into Home
+Assistant's `custom_components/` folder and restart.
+
+It needs Home Assistant 2025.3 or later, the same as House Structure. Adding
+it creates `sensor.sun_sweep`. The card reads that sensor.
+
+Setting up the card, and what each toggle does, is in
+[the configuration page](docs/configuration.md). That is the page Home
+Assistant opens from the integration's help view.
+
+## The card
+
+```yaml
+type: custom:sun-sweep-card
+entity: sensor.sun_sweep
+show_sun: true
+show_times: true
+show_moon: true
+show_hours: true
+```
+
+All four toggles default on. The visual editor has the same switches.
+
+| Toggle | Draws |
+| --- | --- |
+| Sun | The yellow disc on the rim, while the sun is above the horizon |
+| Sunrise and sunset | Those clock times just outside the two edges of the wedge |
+| Moon | The white disc just outside the rim, while the moon is above the horizon |
+| Hour lines | A line at each local hour the sun is up, from the house out to the rim |
