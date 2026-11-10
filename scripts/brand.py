@@ -31,6 +31,8 @@ PALE = (246, 216, 74, 90)
 STRONG = (240, 180, 41, 184)
 SUN = (245, 196, 0, 255)
 SUN_EDGE = (165, 107, 0, 255)
+RING = (17, 17, 17, 255)
+RING_HALO = (255, 255, 255, 255)
 
 # A northern summer day: sunrise in the north-east, sun mid-morning, sunset north-west.
 RISE, NOW, SET = 48.0, 108.0, 314.0
@@ -67,24 +69,39 @@ def _house(centre: float, rim: float) -> list[tuple[float, float]]:
     return [(centre + east * scale, centre - north * scale) for east, north in corners]
 
 
+def _weights(rim: float) -> tuple[int, int, int]:
+    """Ring, a slim light edge, and a house stroke heavier than the ring.
+
+    The mark is shown at a few dozen pixels, so the strokes are a larger
+    share of the disc than on the card.
+    """
+    ring = max(3, round(rim / 8))
+    halo = ring + max(4, round(rim / 40))
+    house = max(ring, round(rim / 6))
+    return ring, halo, house
+
+
 def draw_mark(image: Image.Image, centre: float, rim: float, dark: bool) -> None:
-    """The wedge, the house and the sun, centred in ``image``."""
+    """The wedge, the ring, the house and the sun, centred in ``image``."""
     draw = ImageDraw.Draw(image, "RGBA")
     draw.polygon(_sector(RISE, SET, rim, centre), fill=PALE)
     draw.polygon(_sector(RISE, NOW, rim, centre), fill=STRONG)
+    ring, halo, house_width = _weights(rim)
+    disc = (centre - rim, centre - rim, centre + rim, centre + rim)
+    draw.ellipse(disc, outline=RING_HALO, width=halo)
+    draw.ellipse(disc, outline=RING, width=ring)
     house = _house(centre, rim)
     fill = (36, 48, 64, 255) if dark else (247, 244, 239, 255)
     edge = (244, 247, 251, 255) if dark else (61, 74, 87, 255)
-    width = max(2, int(rim / 28))
-    draw.line([*house, house[0]], fill=edge, width=width)
-    draw.polygon(house, fill=fill, outline=edge)
+    draw.polygon(house, fill=fill)
+    draw.line([*house, house[0]], fill=edge, width=house_width, joint="curve")
     sun = _at(NOW, rim, centre)
     radius = max(4, int(rim / 11))
     draw.ellipse(
         (sun[0] - radius, sun[1] - radius, sun[0] + radius, sun[1] + radius),
         fill=SUN,
         outline=SUN_EDGE,
-        width=max(2, width // 2),
+        width=max(2, ring // 3),
     )
 
 
@@ -158,30 +175,41 @@ def _svg(dark: bool) -> str:
     fill = "#243040" if dark else "#f7f4ef"
     centre, rim = 256.0, 184.0
     sun = _at(NOW, rim, centre)
+    ring, halo, house_width = _weights(rim)
+    outer = rim + halo / 2
     points = [
         *_sector(RISE, SET, rim, centre),
         *_house(centre, rim),
+        (centre - outer, centre),
+        (centre + outer, centre),
+        (centre, centre - outer),
+        (centre, centre + outer),
         (sun[0] - 24, sun[1]),
         (sun[0] + 24, sun[1]),
         (sun[0], sun[1] - 24),
         (sun[0], sun[1] + 24),
     ]
-    pad = 8.0
+    pad = 4.0
     left = min(point[0] for point in points) - pad
     top = min(point[1] for point in points) - pad
     right = max(point[0] for point in points) + pad
     bottom = max(point[1] for point in points) + pad
 
-    def ring(start: float, end: float) -> str:
+    def sector(start: float, end: float) -> str:
         return " ".join(f"{x:.1f},{y:.1f}" for x, y in _sector(start, end, rim, centre))
 
     house = " ".join(f"{x:.1f},{y:.1f}" for x, y in _house(centre, rim))
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{left:.1f} {top:.1f} '
         f'{right - left:.1f} {bottom - top:.1f}">'
-        f'<polygon points="{ring(RISE, SET)}" fill="#f6d84a" fill-opacity="0.35"/>'
-        f'<polygon points="{ring(RISE, NOW)}" fill="#f0b429" fill-opacity="0.72"/>'
-        f'<polygon points="{house}" fill="{fill}" stroke="{edge}" stroke-width="8"/>'
+        f'<polygon points="{sector(RISE, SET)}" fill="#f6d84a" fill-opacity="0.35"/>'
+        f'<polygon points="{sector(RISE, NOW)}" fill="#f0b429" fill-opacity="0.72"/>'
+        f'<circle cx="{centre:.1f}" cy="{centre:.1f}" r="{rim:.1f}" fill="none" '
+        f'stroke="#ffffff" stroke-width="{halo}"/>'
+        f'<circle cx="{centre:.1f}" cy="{centre:.1f}" r="{rim:.1f}" fill="none" '
+        f'stroke="#111111" stroke-width="{ring}"/>'
+        f'<polygon points="{house}" fill="{fill}" stroke="{edge}" '
+        f'stroke-width="{house_width}"/>'
         f'<circle cx="{sun[0]:.1f}" cy="{sun[1]:.1f}" r="18" fill="#f5c400" '
         f'stroke="#a56b00" stroke-width="6"/></svg>\n'
     )
