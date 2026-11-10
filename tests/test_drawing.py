@@ -46,7 +46,8 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert svg.count('transform="rotate(') == 2
     assert ">N<" in svg
     assert 'id="ring"' in svg and 'stroke="#111111"' in svg
-    end = point_at(313.5, 112)
+    assert svg.index('id="hours"') < svg.index('id="house"')
+    end = point_at(313.5, 128)
     assert f"{end[0]:.1f}" in svg
     sun = point_at(SUMMER["sun_azimuth"], 128)
     moon = point_at(SUMMER["moon_azimuth"], 128)
@@ -87,8 +88,8 @@ def test_a_short_winter_arc_is_the_minor_one():
         "hour_azimuths": [{"time": "15:00", "azimuth": 200.0}],
     }
     svg = card_svg(winter)
-    assert "A 112.0 112.0 0 0 1" in svg  # the short arc, clockwise
-    assert "A 112.0 112.0 0 1 1" not in svg
+    assert "A 128.0 128.0 0 0 1" in svg  # the short arc, clockwise
+    assert "A 128.0 128.0 0 1 1" not in svg
 
 
 def test_after_sunset_the_sun_marker_is_hidden_and_the_wedge_remains():

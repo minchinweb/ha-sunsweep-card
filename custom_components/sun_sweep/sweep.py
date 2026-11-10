@@ -208,13 +208,53 @@ def day_sweep(when: datetime, latitude: float, longitude: float) -> Sweep:
     )
 
 
+_EQUINOX = {
+    "march-equinox": "march",
+    "vernal-equinox": "march",
+    "spring-equinox": "march",
+    "september-equinox": "september",
+    "autumnal-equinox": "september",
+    "autumn-equinox": "september",
+    "fall-equinox": "september",
+}
+
+
+def equinox(year: int, which: str) -> datetime:
+    """The March or September equinox, in UTC, to about a minute.
+
+    Meeus's polynomial for the years 1000 to 3000. The result is terrestrial
+    time less 69 seconds, the leap-second offset through the 2020s.
+    """
+    y = (year - 2000) / 1000
+    if which == "march":
+        jde = (
+            2451623.80984
+            + 365242.37404 * y
+            + 0.05169 * y * y
+            - 0.00411 * y**3
+            - 0.00057 * y**4
+        )
+    else:
+        jde = (
+            2451810.21715
+            + 365242.01767 * y
+            - 0.11575 * y * y
+            + 0.00337 * y**3
+            + 0.00078 * y**4
+        )
+    moment = datetime(2000, 1, 1, 12, tzinfo=UTC) + timedelta(days=jde - 2451545.0)
+    return moment - timedelta(seconds=69)
+
+
 def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> datetime:
     """The moment a pinned card should draw.
 
     Args:
         now: The live local time. Its clock is kept when ``date`` is only a day.
-        date: ``YYYY-MM-DD``, or a full ISO datetime. Empty means ``now``.
-        clock: ``HH:MM``, used with a bare date. Ignored when ``date`` has a time.
+        date: ``YYYY-MM-DD``, a full ISO datetime, ``march-equinox``, or
+            ``september-equinox``. Empty means ``now``.
+        clock: ``HH:MM``, used with a bare date or an equinox. Ignored when
+            ``date`` already has a time.
 
     Raises:
         ValueError: The date or the clock cannot be read.
@@ -222,6 +262,10 @@ def resolve_when(now: datetime, date: str | None, clock: str | None = None) -> d
     if not date or not str(date).strip():
         return now
     text = str(date).strip()
+    which = _EQUINOX.get(text.lower().replace(" ", "-"))
+    if which:
+        local = equinox(now.year, which).astimezone(now.tzinfo)
+        text = local.date().isoformat()
     if "T" in text:
         parsed = datetime.fromisoformat(text)
         if parsed.tzinfo is None:

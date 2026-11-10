@@ -1,5 +1,5 @@
 # Copyright (c) 2026 MinchinWeb
-"""Render the three README pictures from the card's drawing.
+"""Render the README pictures from the card's drawing.
 
 Run from the repository root::
 
@@ -20,7 +20,12 @@ from zoneinfo import ZoneInfo
 from PIL import Image, ImageDraw, ImageFont
 
 from custom_components.sun_sweep.drawing import card_svg, point_at
-from custom_components.sun_sweep.sweep import resolve_when, snapshot, travel
+from custom_components.sun_sweep.sweep import (
+    finish_snapshot,
+    resolve_when,
+    snapshot,
+    travel,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "images"
@@ -40,10 +45,13 @@ MOON = (197, 208, 220, 255)
 HOUSE_FILL = (247, 244, 239, 255)
 HOUSE_EDGE = (61, 74, 87, 255)
 
+# name, moment, outline (None draws the 10 m square), card options
 SCENES = (
-    ("summer-morning", datetime(2026, 6, 6, 9, 30, tzinfo=ZONE)),
-    ("winter-afternoon", datetime(2026, 12, 21, 15, 0, tzinfo=ZONE)),
-    ("after-sunset", datetime(2026, 6, 21, 23, 0, tzinfo=ZONE)),
+    ("summer-morning", datetime(2026, 6, 6, 9, 30, tzinfo=ZONE), HOUSE, None),
+    ("winter-afternoon", datetime(2026, 12, 21, 15, 0, tzinfo=ZONE), HOUSE, None),
+    ("after-sunset", datetime(2026, 6, 21, 23, 0, tzinfo=ZONE), HOUSE, None),
+    ("square-morning", datetime(2026, 6, 6, 9, 30, tzinfo=ZONE), None, None),
+    ("rotated", datetime(2026, 6, 6, 9, 30, tzinfo=ZONE), HOUSE, {"rotation": 40}),
 )
 
 
@@ -111,11 +119,11 @@ def _clock(iso: str) -> str:
     return text.removeprefix("0")
 
 
-def paint(attrs: dict, size: int = 640) -> Image.Image:
+def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Image:
     """A PNG of the card drawing, on white."""
     image = Image.new("RGBA", (size, size), (255, 255, 255, 255))
     draw = ImageDraw.Draw(image, "RGBA")
-    rim = 112.0 * size / 320
+    rim = 128.0 * size / 320
     sun_clockwise = attrs.get("sun_clockwise", True)
     if attrs.get("twilight_full"):
         mid = size / 2
@@ -139,13 +147,8 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
             _sector(attrs["pale_start"], attrs["pale_end"], rim, size, sun_clockwise),
             fill=PALE,
         )
-    ring = 128.0 * size / 320
+    ring = rim
     mid = size / 2
-    draw.ellipse(
-        (mid - ring, mid - ring, mid + ring, mid + ring),
-        outline=RING,
-        width=max(3, round(3 * size / 320)),
-    )
     if attrs.get("strong_full"):
         mid = size / 2
         draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=STRONG)
@@ -156,10 +159,12 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
             ),
             fill=STRONG,
         )
+    draw.ellipse(
+        (mid - ring, mid - ring, mid + ring, mid + ring),
+        outline=RING,
+        width=max(3, round(3 * size / 320)),
+    )
     house, house_radius = _house(attrs["outline"], size, rim)
-    width = max(2, int(size / 160))
-    draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
-    draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("hour_azimuths"):
         width = max(2, int(size / 220))
         for mark in attrs["hour_azimuths"]:
@@ -178,6 +183,9 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
                 fill=HOUR,
                 width=width,
             )
+    width = max(2, int(size / 160))
+    draw.polygon(house, fill=HOUSE_FILL, outline=HOUSE_EDGE)
+    draw.line([*house, house[0]], fill=HOUSE_EDGE, width=width)
     if attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], ring, size)
         _disc(image, x, y, 8 * size / 320, SUN)
@@ -195,6 +203,14 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
         _write_along(image, x, y, _clock(attrs[key]), angle, font, INK)
     nx, ny = point_at(0, ring - 18 * size / 320, size)
     draw.text((nx, ny + 4 * size / 320), "N", font=font, fill=INK, anchor="mm")
+    rotation = float((options or {}).get("rotation") or 0)
+    if rotation:
+        image = image.rotate(
+            -rotation,
+            resample=Image.Resampling.BICUBIC,
+            center=(size / 2, size / 2),
+            fillcolor=(255, 255, 255, 255),
+        )
     return image
 
 
@@ -207,15 +223,19 @@ def main() -> None:
     parser.add_argument("--name", default="preview", help="File name for one picture")
     args = parser.parse_args()
     if args.date:
-        scenes = ((args.name, resolve_when(datetime.now(ZONE), args.date, args.time)),)
+        when = resolve_when(datetime.now(ZONE), args.date, args.time)
+        scenes = ((args.name, when, HOUSE, None),)
     else:
         scenes = SCENES
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, when in scenes:
-        attrs = snapshot(when, LAT, LON, HOUSE)
-        svg = card_svg(attrs).replace("var(--primary-text-color)", "#3d4a57")
+    for name, when, outline, options in scenes:
+        if outline is None:
+            attrs = finish_snapshot(when, LAT, LON, None, house_structure=False)
+        else:
+            attrs = snapshot(when, LAT, LON, outline)
+        svg = card_svg(attrs, options).replace("var(--primary-text-color)", "#3d4a57")
         (OUT / f"{name}.svg").write_text(svg, encoding="utf-8")
-        paint(attrs).save(OUT / f"{name}.png")
+        paint(attrs, options=options).save(OUT / f"{name}.png")
         print(
             name,
             attrs["phase"],

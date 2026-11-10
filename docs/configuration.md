@@ -40,15 +40,15 @@ as leaving it on.
 | `show_sun` | on | A two-tone yellow disc centred on the black ring at the sun's compass bearing, only while the sun is above the horizon |
 | `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written along the two edges of the wedge |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
-| `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
+| `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. Every third hour runs further in. The house is drawn on top, so the lines do not show inside the walls |
 | `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
 | `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways |
-| `date` | | Pin the card to a day, `YYYY-MM-DD`, or a full ISO datetime. The sensor itself stays live. Leave this out for today |
+| `date` | | Pin the card to `YYYY-MM-DD`, a full ISO datetime, `march-equinox`, or `september-equinox` (this year, at home). The sensor itself stays live. Leave this out for today |
 | `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day |
 
-A black ring circles the daylight disc, the way a compass draws its edge.
+A black ring circles the disc, and the daylight and twilight wedges run out to it.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
-wedge stays visible around it. Noon is drawn across the building to the centre. Every third hour reaches further in than the hours between, so the afternoon can be counted off without reading a clock.
+wedge stays visible around it. Noon and every third hour are drawn further in than the other hours, and the house covers the part of a line that falls inside the walls.
 
 ## How to read the wedge
 
@@ -69,12 +69,14 @@ drawing, set `date` and optionally `time`:
 
 ```yaml
 type: custom:sun-sweep-card
-date: "2026-06-21"
-time: "09:30"
+date: september-equinox
+time: "15:00"
 ```
 
-The pictures in the readme are rendered the same way, with
-`python scripts/render_card.py --date 2026-06-21 --time 09:30 --name preview`.
+The pictures in the readme are rendered with `python scripts/render_card.py`.
+That writes the June morning, the winter afternoon, the hour after sunset,
+the same morning turned 40 degrees, and the 10 m square. One extra picture
+is `python scripts/render_card.py --date 2026-06-21 --time 09:30 --name preview`.
 
 The sensor's state is `above_horizon` or `below_horizon`. The card uses the
 attributes (the outline in metres, the wedge, the hour bearings, and where

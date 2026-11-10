@@ -141,6 +141,15 @@ def test_a_bare_date_keeps_the_clock_time_and_a_full_one_replaces_it():
         resolve_when(now, "June", None)
 
 
+def test_an_equinox_is_that_day_in_the_home_year():
+    now = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    march = resolve_when(now, "march-equinox", "12:00")
+    september = resolve_when(now, "september equinox", None)
+    assert (march.month, march.day, march.hour) == (3, 20, 12)
+    assert (september.month, september.day) == (9, 22)
+    assert (september.hour, september.minute) == (9, 30)
+
+
 def test_without_house_structure_the_outline_is_a_ten_metre_square():
     when = _at(EDMONTON, 2026, 6, 21, 9, 30)
     attrs = finish_snapshot(when, LAT, LON, None, house_structure=False)

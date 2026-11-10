@@ -7,7 +7,6 @@ import { LitElement, css, html, svg } from "lit";
 const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
 const SIZE = 320;
-const RIM = 112;
 const RING_R = 128;
 const PALE = "#f6d84a";
 const STRONG = "#f0b429";
@@ -50,7 +49,7 @@ function hourInner(time, houseRadius) {
   const hour = Number(String(time).slice(0, 2));
   if (hour === 12) return 0;
   if (hour % 3 === 0) return houseRadius * 0.45;
-  return Math.min(houseRadius + 6, RIM - 8);
+  return Math.min(houseRadius + 6, RING_R - 8);
 }
 
 function disc(id, x, y, radius, fill) {
@@ -62,7 +61,7 @@ function disc(id, x, y, radius, fill) {
 }
 
 function along(azimuth, houseRadius) {
-  const radius = Math.min(RIM - 36, Math.max(houseRadius + 16, RIM * 0.62));
+  const radius = Math.min(RING_R - 36, Math.max(houseRadius + 16, RING_R * 0.62));
   let angle = azimuth - 90;
   const turned = ((angle % 360) + 360) % 360;
   if (turned > 90 && turned < 270) angle += 180;
@@ -148,23 +147,23 @@ class SunSweepCard extends LitElement {
     const sunClockwise = attrs.sun_clockwise !== false;
     const parts = [];
     if (this._on("show_twilight") && attrs.twilight_full) {
-      parts.push(svg`<circle id="twilight" cx="160" cy="160" r=${RIM} fill=${TWILIGHT} fill-opacity="0.55"></circle>`);
+      parts.push(svg`<circle id="twilight" cx="160" cy="160" r=${RING_R} fill=${TWILIGHT} fill-opacity="0.55"></circle>`);
     } else if (this._on("show_twilight") && attrs.twilight_start != null) {
-      parts.push(wedge("twilight", attrs.twilight_start, attrs.twilight_end, RIM, TWILIGHT, 0.55, sunClockwise));
+      parts.push(wedge("twilight", attrs.twilight_start, attrs.twilight_end, RING_R, TWILIGHT, 0.55, sunClockwise));
     }
     if (attrs.pale_full) {
-      parts.push(svg`<circle id="pale" cx="160" cy="160" r=${RIM} fill=${PALE} fill-opacity="0.35"></circle>`);
-      parts.push(svg`<circle id="rim" cx="160" cy="160" r=${RIM} fill="none" stroke=${HOUR} stroke-width="1.5"></circle>`);
+      parts.push(svg`<circle id="pale" cx="160" cy="160" r=${RING_R} fill=${PALE} fill-opacity="0.35"></circle>`);
+      parts.push(svg`<circle id="rim" cx="160" cy="160" r=${RING_R} fill="none" stroke=${HOUR} stroke-width="1.5"></circle>`);
     } else if (attrs.pale_start != null) {
-      parts.push(wedge("pale", attrs.pale_start, attrs.pale_end, RIM, PALE, 0.35, sunClockwise));
-      parts.push(arc(attrs.pale_start, attrs.pale_end, RIM, sunClockwise));
+      parts.push(wedge("pale", attrs.pale_start, attrs.pale_end, RING_R, PALE, 0.35, sunClockwise));
+      parts.push(arc(attrs.pale_start, attrs.pale_end, RING_R, sunClockwise));
+    }
+    if (attrs.strong_full) {
+      parts.push(svg`<circle id="strong" cx="160" cy="160" r=${RING_R} fill=${STRONG} fill-opacity="0.72"></circle>`);
+    } else if (attrs.strong_start != null) {
+      parts.push(wedge("strong", attrs.strong_start, attrs.strong_end, RING_R, STRONG, 0.72, sunClockwise));
     }
     parts.push(svg`<circle id="ring" cx="160" cy="160" r=${RING_R} fill="none" stroke=${RING} stroke-width="3"></circle>`);
-    if (attrs.strong_full) {
-      parts.push(svg`<circle id="strong" cx="160" cy="160" r=${RIM} fill=${STRONG} fill-opacity="0.72"></circle>`);
-    } else if (attrs.strong_start != null) {
-      parts.push(wedge("strong", attrs.strong_start, attrs.strong_end, RIM, STRONG, 0.72, sunClockwise));
-    }
     const outline = attrs.outline;
     const easts = outline.map((p) => p[0]);
     const norths = outline.map((p) => p[1]);
@@ -173,7 +172,7 @@ class SunSweepCard extends LitElement {
       Math.max(...norths) - Math.min(...norths),
       1e-6,
     );
-    const scale = (0.42 * 2 * RIM) / span;
+    const scale = (0.42 * 2 * RING_R) / span;
     const house = outline.map(([east, north]) => [
       SIZE / 2 + east * scale,
       SIZE / 2 - north * scale,
@@ -182,16 +181,16 @@ class SunSweepCard extends LitElement {
       ...house.map(([x, y]) => Math.hypot(x - SIZE / 2, y - SIZE / 2)),
     );
     const points = house.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-    parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_hours") && attrs.hour_azimuths?.length) {
       const lines = attrs.hour_azimuths.map((mark) => {
         const inner = hourInner(mark.time, houseRadius);
         const [x1, y1] = pointAt(mark.azimuth, inner);
-        const [x2, y2] = pointAt(mark.azimuth, RIM);
+        const [x2, y2] = pointAt(mark.azimuth, RING_R);
         return svg`<line x1=${x1.toFixed(1)} y1=${y1.toFixed(1)} x2=${x2.toFixed(1)} y2=${y2.toFixed(1)} stroke=${HOUR} stroke-width="1.5"></line>`;
       });
       parts.push(svg`<g id="hours">${lines}</g>`);
     }
+    parts.push(svg`<polygon id="house" points=${points} fill="#f7f4ef" stroke="#3d4a57" stroke-width="2"></polygon>`);
     if (this._on("show_sun") && attrs.sun_elevation > 0) {
       const [x, y] = pointAt(attrs.sun_azimuth, RING_R);
       parts.push(disc("sun", x, y, 8, "#f5c400"));
@@ -312,7 +311,7 @@ class SunSweepCardEditor extends LitElement {
             show_hours: "Hour lines",
             show_twilight: "Twilight",
             rotation: "Rotation",
-            date: "Date (YYYY-MM-DD)",
+            date: "Date (YYYY-MM-DD, march-equinox, september-equinox)",
             time: "Time (HH:MM)",
           })[item.name]}
         @value-changed=${this._changed}

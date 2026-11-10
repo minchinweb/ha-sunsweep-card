@@ -29,7 +29,6 @@ from .constants import (
 from .sweep import travel
 
 SIZE = 320
-_RIM = 112.0
 _RING = 128.0
 _SUN_R = 8.0
 _MOON_R = 7.0
@@ -99,13 +98,13 @@ def _message(size: int, text: str) -> str:
 
 
 def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
-    """Wedges and the black ring, then hours, the house, the bodies, the times and N."""
+    """Wedges out to the ring, then the hours, then the house on top of them."""
     parts: list[str] = []
-    rim = _RIM * size / SIZE
+    ring = _RING * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
     if flags["show_twilight"] and attrs.get("twilight_full"):
         parts.append(
-            f'<circle id="twilight" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
+            f'<circle id="twilight" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
             f'fill="{TWILIGHT}" fill-opacity="{TWILIGHT_OPACITY}"/>'
         )
     elif flags["show_twilight"] and attrs.get("twilight_start") is not None:
@@ -114,7 +113,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 "twilight",
                 attrs["twilight_start"],
                 attrs["twilight_end"],
-                rim,
+                ring,
                 TWILIGHT,
                 TWILIGHT_OPACITY,
                 size,
@@ -123,11 +122,11 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         )
     if attrs.get("pale_full"):
         parts.append(
-            f'<circle id="pale" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
+            f'<circle id="pale" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
             f'fill="{PALE}" fill-opacity="{PALE_OPACITY}"/>'
         )
         parts.append(
-            f'<circle id="rim" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
+            f'<circle id="rim" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
             f'fill="none" stroke="{HOUR}" stroke-width="1.5"/>'
         )
     elif attrs.get("pale_start") is not None:
@@ -136,7 +135,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 "pale",
                 attrs["pale_start"],
                 attrs["pale_end"],
-                rim,
+                ring,
                 PALE,
                 PALE_OPACITY,
                 size,
@@ -145,17 +144,17 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         )
         parts.append(
             _arc(
-                "rim", attrs["pale_start"], attrs["pale_end"], rim, size, sun_clockwise
+                "rim",
+                attrs["pale_start"],
+                attrs["pale_end"],
+                ring,
+                size,
+                sun_clockwise,
             )
         )
-    ring = _RING * size / SIZE
-    parts.append(
-        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
-        f'fill="none" stroke="{RING}" stroke-width="3"/>'
-    )
     if attrs.get("strong_full"):
         parts.append(
-            f'<circle id="strong" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
+            f'<circle id="strong" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
             f'fill="{STRONG}" fill-opacity="{STRONG_OPACITY}"/>'
         )
     elif attrs.get("strong_start") is not None:
@@ -164,26 +163,30 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
                 "strong",
                 attrs["strong_start"],
                 attrs["strong_end"],
-                rim,
+                ring,
                 STRONG,
                 STRONG_OPACITY,
                 size,
                 sun_clockwise,
             )
         )
-    house = _house(attrs["outline"], size, rim)
-    parts.append(house[0])
+    parts.append(
+        f'<circle id="ring" cx="{size / 2}" cy="{size / 2}" r="{ring:.1f}" '
+        f'fill="none" stroke="{RING}" stroke-width="3"/>'
+    )
+    house = _house(attrs["outline"], size, ring)
     if flags["show_hours"] and attrs.get("hour_azimuths"):
         lines = []
         for mark in attrs["hour_azimuths"]:
-            inner = _hour_inner(mark["time"], house[1], rim, size)
+            inner = _hour_inner(mark["time"], house[1], ring, size)
             x1, y1 = point_at(mark["azimuth"], inner, size)
-            x2, y2 = point_at(mark["azimuth"], rim, size)
+            x2, y2 = point_at(mark["azimuth"], ring, size)
             lines.append(
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                 f'stroke="{HOUR}" stroke-width="1.5"/>'
             )
         parts.append(f'<g id="hours">{"".join(lines)}</g>')
+    parts.append(house[0])
     if flags["show_sun"] and attrs.get("sun_elevation", -1) > 0:
         x, y = point_at(attrs["sun_azimuth"], ring, size)
         parts.append(_disc("sun", x, y, _SUN_R * size / SIZE, SUN_FILL))
@@ -191,7 +194,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         x, y = point_at(attrs["moon_azimuth"], ring, size)
         parts.append(_disc("moon", x, y, _MOON_R * size / SIZE, MOON_FILL))
     if flags["show_times"]:
-        parts.extend(_times(attrs, size, rim, house[1]))
+        parts.extend(_times(attrs, size, ring, house[1]))
     nx, ny = point_at(0, ring - 18 * size / SIZE, size)
     parts.append(
         f'<text id="north" x="{nx:.1f}" y="{ny + 4:.1f}" text-anchor="middle" '
@@ -203,9 +206,9 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
 def _hour_inner(clock: str, house_radius: float, rim: float, size: int) -> float:
     """How close to the centre an hour line starts.
 
-    Noon runs to the centre. Every third hour (3, 6, 9, and the same marks
-    through the afternoon and night) starts inside the house. The rest start
-    just outside it. All of them end on the daylight rim.
+    Noon runs to the centre. Every third hour starts further in than the
+    others. The house is drawn afterwards, so none of the lines show inside
+    the walls. All of them end on the ring.
     """
     hour = int(str(clock)[:2])
     if hour == 12:
