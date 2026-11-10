@@ -158,7 +158,7 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         x, y = point_at(attrs["moon_azimuth"], ring, size)
         parts.append(_disc("moon", x, y, _MOON_R * size / SIZE, MOON_FILL))
     if flags["show_times"]:
-        parts.extend(_times(attrs, size, rim))
+        parts.extend(_times(attrs, size, rim, house[1]))
     nx, ny = point_at(0, ring - 18 * size / SIZE, size)
     parts.append(
         f'<text id="north" x="{nx:.1f}" y="{ny + 4:.1f}" text-anchor="middle" '
@@ -243,7 +243,8 @@ def _house(outline: list, size: int, rim: float) -> tuple[str, float]:
     ), radius
 
 
-def _times(attrs: dict, size: int, rim: float) -> list[str]:
+def _times(attrs: dict, size: int, rim: float, house_radius: float) -> list[str]:
+    """Sunrise and sunset, rotated to lie along those two edges of the wedge."""
     labels = []
     for key, az_key, ident in (
         ("sunrise", "sunrise_azimuth", "sunrise"),
@@ -252,10 +253,11 @@ def _times(attrs: dict, size: int, rim: float) -> list[str]:
         if not attrs.get(key) or attrs.get(az_key) is None:
             continue
         text = _clock(attrs[key])
-        x, y = _label_at(attrs[az_key], size, rim)
+        x, y, angle = _along(attrs[az_key], size, rim, house_radius)
         labels.append(
             f'<text id="{ident}" x="{x:.1f}" y="{y:.1f}" text-anchor="middle" '
-            f'dominant-baseline="middle" fill="var(--primary-text-color)">{text}</text>'
+            f'dominant-baseline="middle" fill="var(--primary-text-color)" '
+            f'transform="rotate({angle:.1f} {x:.1f} {y:.1f})">{text}</text>'
         )
     return labels
 
@@ -267,10 +269,18 @@ def _clock(iso: str) -> str:
     return text.removeprefix("0")
 
 
-def _label_at(azimuth: float, size: int, rim: float) -> tuple[float, float]:
-    """Just outside the rim, pulled inward when the words would leave the box."""
-    for radius in (rim + 16, rim - 20):
-        x, y = point_at(azimuth, radius, size)
-        if 40 <= x <= size - 40 and 12 <= y <= size - 8:
-            return x, y
-    return point_at(azimuth, rim - 20, size)
+def _along(
+    azimuth: float, size: int, rim: float, house_radius: float
+) -> tuple[float, float, float]:
+    """A point on the spoke, and the clockwise rotation that lays text along it.
+
+    The words stay inside the wedge, clear of the house and of the ring. When
+    laying them outward would turn them upside down, they flip so they stay
+    readable.
+    """
+    outward = rim - 36 * size / SIZE
+    radius = min(outward, max(house_radius + 16 * size / SIZE, rim * 0.62))
+    angle = azimuth - 90
+    if 90 < angle % 360 < 270:
+        angle += 180
+    return *point_at(azimuth, radius, size), angle

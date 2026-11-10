@@ -43,6 +43,7 @@ def test_a_summer_morning_draws_the_elapsed_wedge_and_both_bodies():
     assert 'id="house"' in svg and 'id="sun"' in svg and 'id="moon"' in svg
     assert svg.count('fill-opacity="0.5"') == 2
     assert "5:04 AM" in svg and "10:06 PM" in svg
+    assert svg.count('transform="rotate(') == 2
     assert ">N<" in svg
     assert 'id="ring"' in svg and 'stroke="#111111"' in svg
     end = point_at(313.5, 112)

@@ -60,12 +60,13 @@ function disc(id, x, y, radius, fill) {
   return svg`<g id=${id}><circle cx=${cx} cy=${y.toFixed(1)} r=${radius} fill=${fill}></circle><path d=${d} fill="#ffffff" fill-opacity="0.5"></path></g>`;
 }
 
-function labelAt(azimuth) {
-  for (const radius of [RIM + 16, RIM - 20]) {
-    const [x, y] = pointAt(azimuth, radius);
-    if (x >= 40 && x <= SIZE - 40 && y >= 12 && y <= SIZE - 8) return [x, y];
-  }
-  return pointAt(azimuth, RIM - 20);
+function along(azimuth, houseRadius) {
+  const radius = Math.min(RIM - 36, Math.max(houseRadius + 16, RIM * 0.62));
+  let angle = azimuth - 90;
+  const turned = ((angle % 360) + 360) % 360;
+  if (turned > 90 && turned < 270) angle += 180;
+  const [x, y] = pointAt(azimuth, radius);
+  return [x, y, angle];
 }
 
 class SunSweepCard extends LitElement {
@@ -166,8 +167,10 @@ class SunSweepCard extends LitElement {
         ["sunset", "sunset_azimuth", "sunset"],
       ]) {
         if (!attrs[key] || attrs[az] == null) continue;
-        const [x, y] = labelAt(attrs[az]);
-        parts.push(svg`<text id=${id} x=${x.toFixed(1)} y=${y.toFixed(1)} text-anchor="middle" dominant-baseline="middle">${this._clock(attrs[key])}</text>`);
+        const [x, y, angle] = along(attrs[az], houseRadius);
+        const xf = x.toFixed(1);
+        const yf = y.toFixed(1);
+        parts.push(svg`<text id=${id} x=${xf} y=${yf} text-anchor="middle" dominant-baseline="middle" transform="rotate(${angle.toFixed(1)} ${xf} ${yf})">${this._clock(attrs[key])}</text>`);
       }
     }
     const [nx, ny] = pointAt(0, RING_R - 18);

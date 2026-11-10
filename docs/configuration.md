@@ -36,7 +36,7 @@ as leaving it on.
 | --- | --- | --- |
 | `entity` | `sensor.sun_sweep` | The sensor this integration creates |
 | `show_sun` | on | A two-tone yellow disc centred on the black ring at the sun's compass bearing, only while the sun is above the horizon |
-| `show_times` | on | Sunrise and sunset, in your Home Assistant time format, just outside the two edges of the wedge |
+| `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written along the two edges of the wedge |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
 

@@ -84,12 +84,25 @@ def _disc(image: Image.Image, x: float, y: float, radius: float, fill) -> None:
     image.alpha_composite(wash)
 
 
-def _label(azimuth, size, rim) -> tuple[float, float]:
-    for radius in (rim + 16 * size / 320, rim - 20 * size / 320):
-        x, y = point_at(azimuth, radius, size)
-        if 40 * size / 320 <= x <= size - 40 * size / 320 and 12 <= y <= size - 8:
-            return x, y
-    return point_at(azimuth, rim - 20 * size / 320, size)
+def _along(azimuth, size, rim, house_radius) -> tuple[float, float, float]:
+    outward = rim - 36 * size / 320
+    radius = min(outward, max(house_radius + 16 * size / 320, rim * 0.62))
+    angle = azimuth - 90
+    if 90 < angle % 360 < 270:
+        angle += 180
+    x, y = point_at(azimuth, radius, size)
+    return x, y, angle
+
+
+def _write_along(image, x, y, text, angle, font, fill) -> None:
+    """Draw ``text`` centred on ``(x, y)``, rotated clockwise by ``angle``."""
+    probe = ImageDraw.Draw(image)
+    box = probe.textbbox((0, 0), text, font=font)
+    pad = 8
+    layer = Image.new("RGBA", (box[2] - box[0] + pad * 2, box[3] - box[1] + pad * 2))
+    ImageDraw.Draw(layer).text((pad - box[0], pad - box[1]), text, font=font, fill=fill)
+    spun = layer.rotate(-angle, expand=True, resample=Image.Resampling.BICUBIC)
+    image.alpha_composite(spun, (round(x - spun.width / 2), round(y - spun.height / 2)))
 
 
 def _clock(iso: str) -> str:
@@ -163,8 +176,8 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
     for key, azimuth_key in pairs:
         if not attrs.get(key) or attrs.get(azimuth_key) is None:
             continue
-        x, y = _label(attrs[azimuth_key], size, rim)
-        draw.text((x, y), _clock(attrs[key]), font=font, fill=INK, anchor="mm")
+        x, y, angle = _along(attrs[azimuth_key], size, rim, house_radius)
+        _write_along(image, x, y, _clock(attrs[key]), angle, font, INK)
     nx, ny = point_at(0, ring - 18 * size / 320, size)
     draw.text((nx, ny + 4 * size / 320), "N", font=font, fill=INK, anchor="mm")
     return image
