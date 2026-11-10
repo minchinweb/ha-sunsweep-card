@@ -44,7 +44,7 @@ as leaving it on.
 | `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
 | `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways. The editor uses a slider |
 | `date` | | Pin the card to `YYYY-MM-DD`, a full ISO datetime, `march-equinox`, `june-solstice`, `september-equinox`, or `december-solstice` (this year, at home). `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere: summer is June in the north and December in the south. The sensor itself stays live. Leave this out for today. While a date is set, the card says which day it is holding |
-| `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day. The editor shows this once a date is set |
+| `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day. The editor shows this once a date is set, and hides it when that date already includes a time |
 | `tap_action` | none | What a tap does. `more-info`, `navigate`, `url`, `toggle`, `perform-action`, or `none`. None leaves the picture alone |
 
 A black ring circles the disc, and the daylight and twilight wedges run out to it.

@@ -412,7 +412,8 @@ class SunSweepCardEditor extends LitElement {
       const calendar = raw === "" || /^\d{4}-\d{2}-\d{2}$/.test(raw);
       fields.push({ name: "date", selector: calendar ? { date: {} } : { text: {} } });
     }
-    if (this.config?.date) {
+    const chosen = String(this.config?.date || "");
+    if (chosen && !chosen.includes("T")) {
       fields.push({ name: "time", selector: { time: {} } });
     }
     fields.push({
