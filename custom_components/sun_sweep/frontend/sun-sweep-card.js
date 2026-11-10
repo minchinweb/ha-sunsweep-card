@@ -11,7 +11,12 @@ const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
 
 class SunSweepCard extends LitElement {
-  static properties = { hass: {}, config: {}, _fixed: { state: true } };
+  static properties = {
+    hass: {},
+    config: {},
+    _fixed: { state: true },
+    _loading: { state: true },
+  };
 
   static styles = css`
     :host { display: block; }
@@ -66,25 +71,85 @@ class SunSweepCard extends LitElement {
   async _loadFixed() {
     const date = this.config?.date;
     if (!date || !this.hass?.callWS) {
-      this._fixed = undefined;
       this._fixedKey = "";
+      if (this._loading) this._loading = false;
+      if (this._fixed !== undefined) this._fixed = undefined;
       return;
     }
     const key = `${date}|${this.config.time || ""}`;
     if (key === this._fixedKey) return;
     this._fixedKey = key;
+    this._loading = true;
     try {
       const attrs = await this.hass.callWS({
         type: "sun_sweep/snapshot",
         date,
         time: this.config.time || undefined,
       });
-      if (this._fixedKey === key) this._fixed = attrs;
+      if (this._fixedKey !== key) return;
+      this._fixed = attrs;
+      this._loading = false;
     } catch (err) {
-      if (this._fixedKey === key) {
-        this._fixed = { error: err?.message || "That date could not be drawn." };
-      }
+      if (this._fixedKey !== key) return;
+      this._fixed = { error: err?.message || "That date could not be drawn." };
+      this._loading = false;
     }
+  }
+
+  _held() {
+    const date = String(this.config?.date || "").trim();
+    const key = date.toLowerCase().replaceAll(" ", "-");
+    const named = {
+      "march-equinox": "the March equinox",
+      "june-solstice": "the June solstice",
+      "september-equinox": "the September equinox",
+      "december-solstice": "the December solstice",
+      "vernal-equinox": "the vernal equinox",
+      "spring-equinox": "the spring equinox",
+      "summer-solstice": "the summer solstice",
+      "autumnal-equinox": "the autumnal equinox",
+      "autumn-equinox": "the autumn equinox",
+      "fall-equinox": "the fall equinox",
+      "winter-solstice": "the winter solstice",
+      spring: "spring",
+      summer: "summer",
+      autumn: "autumn",
+      winter: "winter",
+    };
+    let label = named[key];
+    const language = this.hass?.locale?.language;
+    const timeZone = this.hass?.config?.time_zone;
+    if (!label && date.includes("T") && !Number.isNaN(new Date(date).getTime())) {
+      label = new Date(date).toLocaleString(language, {
+        timeZone,
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } else if (!label && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [year, month, day] = date.split("-").map(Number);
+      label = new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(language, {
+        timeZone: "UTC",
+        dateStyle: "medium",
+      });
+    } else if (!label) {
+      label = date;
+    }
+    const clock =
+      this.config?.time && !date.includes("T") ? ` at ${this._face(this.config.time)}` : "";
+    return `Held on ${label}${clock}.`;
+  }
+
+  _face(clock) {
+    const [hour, minute] = String(clock).split(":");
+    const sample = new Date(Date.UTC(2026, 0, 1, Number(hour), Number(minute) || 0));
+    const cycle = this.hass?.locale?.time_format;
+    const hour12 = cycle === "12" ? true : cycle === "24" ? false : undefined;
+    return sample.toLocaleTimeString(this.hass?.locale?.language, {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12,
+      timeZone: "UTC",
+    });
   }
 
   _on(key) {
@@ -121,21 +186,34 @@ class SunSweepCard extends LitElement {
     const entity = this.config?.entity || "sensor.sun_sweep";
     const state = this.hass?.states?.[entity];
     const pinned = Boolean(this.config?.date);
-    const attrs = pinned ? this._fixed : state?.attributes;
+    const waiting = pinned && (this._loading || !this._fixed || this._fixed.error);
+    const attrs = pinned ? (this._fixed?.error ? undefined : this._fixed) : state?.attributes;
     let body;
-    if (pinned && !this._fixed) {
-      body = html`<div class="message">Drawing ${this.config.date}…</div>`;
-    } else if (pinned && this._fixed?.error) {
-      body = html`<div class="message">${this._fixed.error}</div>`;
+    if (pinned && this._fixed?.error && !this._loading) {
+      body = html`<div class="message" aria-live="polite">${this._fixed.error}</div>`;
+    } else if (pinned && (this._loading || !this._fixed)) {
+      body = html`<div class="message" aria-live="polite">Drawing ${this.config.date}…</div>`;
     } else if (!pinned && !state) {
       body = html`<div class="message">Sun Sweep is not set up.</div>`;
+    } else if (!pinned && (state.state === "unavailable" || state.state === "unknown")) {
+      body = html`<div class="message">Sun Sweep is not ready yet.</div>`;
     } else if (!attrs?.outline?.length) {
       body = html`<div class="message">House Structure has no building outline for this home yet.</div>`;
     } else {
       body = this._picture(attrs);
     }
-    const note = attrs?.outline_fallback
-      ? html`<div class="note">House Structure is not installed, so this is a plain square.</div>`
+    const notes = [];
+    if (!waiting && attrs?.outline_fallback) {
+      notes.push("House Structure is not installed, so this is a plain square.");
+    }
+    if (!waiting && attrs?.phase === "polar_night") {
+      notes.push("The sun stays below the horizon today.");
+    }
+    if (pinned && !this._loading && this._fixed && !this._fixed.error) {
+      notes.push(this._held());
+    }
+    const note = notes.length
+      ? html`<div class="note">${notes.map((line) => html`<div>${line}</div>`)}</div>`
       : "";
     return html`<ha-card>${body}${note}</ha-card>`;
   }
