@@ -9,6 +9,50 @@ import { cardSvg } from "./drawing.js";
 
 const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
+const SHOW = ["show_sun", "show_times", "show_moon", "show_hours", "show_twilight"];
+const OCCASIONS = [
+  ["march-equinox", "March equinox"],
+  ["june-solstice", "June solstice"],
+  ["september-equinox", "September equinox"],
+  ["december-solstice", "December solstice"],
+  ["spring", "Spring"],
+  ["summer", "Summer"],
+  ["autumn", "Autumn"],
+  ["winter", "Winter"],
+  ["vernal-equinox", "Vernal equinox"],
+  ["spring-equinox", "Spring equinox"],
+  ["summer-solstice", "Summer solstice"],
+  ["autumnal-equinox", "Autumnal equinox"],
+  ["autumn-equinox", "Autumn equinox"],
+  ["fall-equinox", "Fall equinox"],
+  ["winter-solstice", "Winter solstice"],
+];
+const LABELS = {
+  entity: "Entity",
+  show_sun: "Sun",
+  show_times: "Sunrise and sunset",
+  show_moon: "Moon",
+  show_hours: "Hour lines",
+  show_twilight: "Twilight",
+  rotation: "Rotation",
+  occasion: "Day",
+  date: "Date",
+  time: "Time",
+  tap_action: "Tap action",
+};
+const HELP = {
+  entity: "The Sun Sweep sensor. Leave this on sensor.sun_sweep unless you renamed it.",
+  show_sun: "The yellow disc on the ring, while the sun is up.",
+  show_times: "Sunrise and sunset, written along the two edges of the day.",
+  show_moon: "The grey disc on the ring, while the moon is up.",
+  show_hours: "A line for each hour the sun is up. Noon is the heavy spoke.",
+  show_twilight: "Blue-grey from civil dawn to civil dusk, under the daylight.",
+  rotation: "Degrees clockwise. North turns with the house, for a tablet mounted sideways.",
+  occasion: "Live follows the clock. A named day stays on that equinox or solstice.",
+  date: "The day to hold. The sensor itself stays on the live clock.",
+  time: "Clock time on the chosen day. Empty uses the time it is now.",
+  tap_action: "What a tap on the card does. None leaves the picture alone.",
+};
 
 class SunSweepCard extends LitElement {
   static properties = {
@@ -65,8 +109,10 @@ class SunSweepCard extends LitElement {
   }
 
   setConfig(config) {
-    if (!config) throw new Error("Invalid configuration");
-    this.config = config;
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+      throw new Error("Invalid configuration");
+    }
+    this.config = { ...config };
   }
 
   willUpdate(changed) {
@@ -304,52 +350,112 @@ class SunSweepCardEditor extends LitElement {
   static properties = { hass: {}, config: {} };
 
   setConfig(config) {
-    this.config = config;
+    this.config = { ...(config || {}) };
+  }
+
+  _occasion() {
+    const date = String(this.config?.date || "").trim();
+    if (!date) return "live";
+    const key = date.toLowerCase().replaceAll(" ", "-");
+    if (OCCASIONS.some(([value]) => value === key)) return key;
+    return "date";
   }
 
   _schema() {
-    return [
+    const fields = [
       { name: "entity", selector: { entity: { domain: "sensor" } } },
-      { name: "show_sun", selector: { boolean: {} } },
-      { name: "show_times", selector: { boolean: {} } },
-      { name: "show_moon", selector: { boolean: {} } },
-      { name: "show_hours", selector: { boolean: {} } },
-      { name: "show_twilight", selector: { boolean: {} } },
+      ...SHOW.map((name) => ({ name, selector: { boolean: {} } })),
       {
         name: "rotation",
         selector: {
-          number: { min: -180, max: 180, step: 1, mode: "box", unit_of_measurement: "°" },
+          number: {
+            min: -180,
+            max: 180,
+            step: 1,
+            mode: "slider",
+            unit_of_measurement: "°",
+          },
         },
       },
-      { name: "date", selector: { text: {} } },
-      { name: "time", selector: { text: {} } },
+      {
+        name: "occasion",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "live", label: "Live clock" },
+              { value: "date", label: "A chosen date" },
+              ...OCCASIONS.map(([value, label]) => ({ value, label })),
+            ],
+          },
+        },
+      },
     ];
+    if (this._occasion() === "date") {
+      const raw = String(this.config?.date || "");
+      const calendar = raw === "" || /^\d{4}-\d{2}-\d{2}$/.test(raw);
+      fields.push({ name: "date", selector: calendar ? { date: {} } : { text: {} } });
+    }
+    if (this.config?.date) {
+      fields.push({ name: "time", selector: { time: {} } });
+    }
+    fields.push({
+      name: "tap_action",
+      selector: {
+        ui_action: {
+          actions: ["more-info", "toggle", "navigate", "url", "perform-action", "none"],
+        },
+      },
+    });
+    return fields;
   }
 
   _data() {
+    const occasion = this._occasion();
     return {
-      entity: this.config.entity || "sensor.sun_sweep",
-      show_sun: this.config.show_sun !== false,
-      show_times: this.config.show_times !== false,
-      show_moon: this.config.show_moon !== false,
-      show_hours: this.config.show_hours !== false,
-      show_twilight: this.config.show_twilight !== false,
-      rotation: Number(this.config.rotation) || 0,
-      date: this.config.date || "",
-      time: this.config.time || "",
+      entity: this.config?.entity || "sensor.sun_sweep",
+      show_sun: this.config?.show_sun !== false,
+      show_times: this.config?.show_times !== false,
+      show_moon: this.config?.show_moon !== false,
+      show_hours: this.config?.show_hours !== false,
+      show_twilight: this.config?.show_twilight !== false,
+      rotation: Number(this.config?.rotation) || 0,
+      occasion,
+      date: occasion === "date" ? this.config.date || "" : "",
+      time: this.config?.time || "",
+      tap_action: this.config?.tap_action || { action: "none" },
     };
   }
 
   _changed(event) {
-    const value = event.detail.value;
-    if (!value) return;
-    if (!value.rotation) delete value.rotation;
-    if (!value.date) delete value.date;
-    if (!value.time) delete value.time;
-    this.config = value;
-    this.dispatchEvent(
-      new CustomEvent("config-changed", { detail: { config: value } }),
-    );
+    const incoming = event.detail.value;
+    if (!incoming) return;
+    const known = new Set([...SHOW, "entity", "rotation", "date", "time", "tap_action"]);
+    const next = {};
+    for (const [key, value] of Object.entries(this.config || {})) {
+      if (!known.has(key)) next[key] = value;
+    }
+    if (incoming.entity && incoming.entity !== "sensor.sun_sweep") next.entity = incoming.entity;
+    for (const key of SHOW) {
+      if (incoming[key] === false) next[key] = false;
+    }
+    if (incoming.rotation) next.rotation = incoming.rotation;
+    const occasion = incoming.occasion || "live";
+    if (occasion === "date") {
+      if (incoming.date) next.date = incoming.date;
+    } else if (occasion !== "live") {
+      next.date = occasion;
+    }
+    if (next.date && incoming.time) {
+      const [hour, minute] = String(incoming.time).split(":");
+      if (hour !== undefined && minute !== undefined && minute !== "") {
+        next.time = `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+      }
+    }
+    const tap = incoming.tap_action;
+    if (tap?.action && tap.action !== "none") next.tap_action = tap;
+    this.config = next;
+    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: next } }));
   }
 
   render() {
@@ -358,18 +464,8 @@ class SunSweepCardEditor extends LitElement {
         .hass=${this.hass}
         .schema=${this._schema()}
         .data=${this._data()}
-        .computeLabel=${(item) =>
-          ({
-            entity: "Entity",
-            show_sun: "Sun",
-            show_times: "Sunrise and sunset",
-            show_moon: "Moon",
-            show_hours: "Hour lines",
-            show_twilight: "Twilight",
-            rotation: "Rotation",
-            date: "Date (YYYY-MM-DD, equinox, or solstice)",
-            time: "Time (HH:MM)",
-          })[item.name]}
+        .computeLabel=${(item) => LABELS[item.name]}
+        .computeHelper=${(item) => HELP[item.name]}
         @value-changed=${this._changed}
       ></ha-form>
     `;
