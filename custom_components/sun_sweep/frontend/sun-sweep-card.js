@@ -3,7 +3,6 @@
  * The shapes are drawn by drawing.js, which matches drawing.py.
  */
 import { LitElement, css, html, nothing } from "lit";
-import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 
 import { cardSvg } from "./drawing.js";
 
@@ -236,7 +235,7 @@ class SunSweepCard extends LitElement {
   }
 
   _picture(attrs) {
-    const picture = cardSvg(attrs, {
+    this._pendingSvg = cardSvg(attrs, {
       show_sun: this._on("show_sun"),
       show_times: this._on("show_times"),
       show_moon: this._on("show_moon"),
@@ -246,7 +245,15 @@ class SunSweepCard extends LitElement {
       clock: (iso) => this._clock(iso),
       embedded: true,
     });
-    return html`<div class="disc" role="img" aria-label=${this._summary(attrs)}>${unsafeSVG(picture)}</div>`;
+    return html`<div class="disc" role="img" aria-label=${this._summary(attrs)}></div>`;
+  }
+
+  updated() {
+    const slot = this.renderRoot?.querySelector(".disc");
+    const svg = this._pendingSvg || "";
+    if (!slot || slot._drawn === svg) return;
+    slot.innerHTML = svg;
+    slot._drawn = svg;
   }
 
   _summary(attrs) {
@@ -494,14 +501,18 @@ class SunSweepCardEditor extends LitElement {
   }
 }
 
-customElements.define("sun-sweep-card", SunSweepCard);
-customElements.define("sun-sweep-card-editor", SunSweepCardEditor);
+if (!customElements.get("sun-sweep-card")) {
+  customElements.define("sun-sweep-card", SunSweepCard);
+  customElements.define("sun-sweep-card-editor", SunSweepCardEditor);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "sun-sweep-card",
-  name: "Sun Sweep",
-  description: "Today's sun angles around your house, top down.",
-  preview: true,
-  documentationURL: DOCS,
-});
+if (!window.customCards.some((card) => card.type === "sun-sweep-card")) {
+  window.customCards.push({
+    type: "sun-sweep-card",
+    name: "Sun Sweep",
+    description: "Today's sun angles around your house, top down.",
+    preview: true,
+    documentationURL: DOCS,
+  });
+}

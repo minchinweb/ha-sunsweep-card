@@ -33,6 +33,8 @@ const clockwise = (start, end) => mod(end - start, 360);
 const travel = (start, end, sunClockwise) =>
   sunClockwise ? clockwise(start, end) : clockwise(end, start);
 const one = (value) => Number(value).toFixed(1);
+const esc = (value) =>
+  String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
 function pointAt(azimuth, radius, size = SIZE) {
   const mid = size / 2;
@@ -252,7 +254,7 @@ function times(attrs, options, size, rim, houseRadius) {
     labels.push(
       `<text id="${ident}" x="${one(x)}" y="${one(y)}" text-anchor="middle" ` +
         `dominant-baseline="${baseline}" ${INK} ` +
-        `transform="rotate(${one(angle)} ${one(x)} ${one(y)})">${clock(attrs[key])}</text>`,
+        `transform="rotate(${one(angle)} ${one(x)} ${one(y)})">${esc(clock(attrs[key]))}</text>`,
     );
   }
   return labels;

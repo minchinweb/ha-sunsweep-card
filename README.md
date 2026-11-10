@@ -78,7 +78,8 @@ instead. Without either, copy `custom_components/sun_sweep/` into Home
 Assistant's `custom_components/` folder and restart.
 
 It needs Home Assistant 2025.3 or later, the same as House Structure. Adding
-it creates `sensor.sun_sweep`. The card reads that sensor.
+it creates `sensor.sun_sweep`, plus `Sunrise azimuth` and `Sunset azimuth`
+on the same device. The card reads `sensor.sun_sweep`.
 
 Setting up the card, and what each toggle does, is in
 [the configuration page](docs/configuration.md). That is the page Home

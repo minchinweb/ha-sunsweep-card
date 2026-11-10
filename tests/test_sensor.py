@@ -12,7 +12,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.sun_sweep.constants import ABOVE, BELOW, DOMAIN, OUTLINE_DATA
 from custom_components.sun_sweep.coordinator import SunSweepCoordinator
-from custom_components.sun_sweep.sensor import SunSweepSensor
+from custom_components.sun_sweep.sensor import AzimuthSensor, SunSweepSensor
 from custom_components.sun_sweep.sweep import project_outline, snapshot
 
 LAT, LON = 53.5461, -113.4938
@@ -36,6 +36,26 @@ def _sensor(hass: HomeAssistant, when: datetime) -> SunSweepSensor:
     sensor = SunSweepSensor(coordinator)
     sensor.hass = hass
     return sensor
+
+
+def test_sunrise_and_sunset_azimuth_are_their_own_sensors(hass: HomeAssistant) -> None:
+    _place(hass)
+    when = datetime(2026, 6, 21, 9, 30, tzinfo=ZoneInfo("America/Edmonton"))
+    entry = MockConfigEntry(domain=DOMAIN, title="Sun Sweep", data={})
+    entry.add_to_hass(hass)
+    coordinator = SunSweepCoordinator(hass, entry)
+    coordinator.data = coordinator._read(when, False)
+    sunrise = AzimuthSensor(
+        coordinator, "sunrise_azimuth", "Sunrise azimuth", "mdi:weather-sunset-up"
+    )
+    sunset = AzimuthSensor(
+        coordinator, "sunset_azimuth", "Sunset azimuth", "mdi:weather-sunset-down"
+    )
+    assert sunrise.native_value == coordinator.data["sunrise_azimuth"]
+    assert sunset.native_value == coordinator.data["sunset_azimuth"]
+    assert sunrise.native_unit_of_measurement == "°"
+    assert sunrise.unique_id == f"{entry.entry_id}_sunrise_azimuth"
+    assert sunset.unique_id == f"{entry.entry_id}_sunset_azimuth"
 
 
 def test_a_missing_outline_is_empty_and_does_not_raise(hass: HomeAssistant) -> None:

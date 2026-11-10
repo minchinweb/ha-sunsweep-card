@@ -30,7 +30,9 @@ type: custom:sun-sweep-card
 entity: sensor.sun_sweep
 ```
 
-Or pick **Sun Sweep** in the card picker. The visual editor can point the card
+Or pick **Sun Sweep** in the card picker. The picker only lists it after
+this integration is added and the browser has loaded the card, so reload
+the page once if you have just finished setup. The visual editor can point the card
 at the sensor and turn each of these on or off. Leaving one out is the same
 as leaving it on.
 
@@ -79,9 +81,12 @@ That writes the June morning, the winter afternoon, the hour after sunset,
 the same morning turned 40 degrees, and the 10 m square. One extra picture
 is `python scripts/render_card.py --date 2026-06-21 --time 09:30 --name preview`.
 
-The sensor's state is `above_horizon` or `below_horizon`. The card uses the
-attributes (the outline in metres, the wedge, the hour bearings, and where
-the sun and moon are) and does not need them copied into the card.
+The main sensor's state is `above_horizon` or `below_horizon`. Two more
+sensors on the same device are `Sunrise azimuth` and `Sunset azimuth`, in
+degrees clockwise from north. On a polar day or polar night those two have
+no value. The card uses the attributes (the outline in metres, the wedge,
+the hour bearings, and where the sun and moon are) and does not need them
+copied into the card.
 
 ## When the picture is missing
 
