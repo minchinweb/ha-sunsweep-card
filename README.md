@@ -73,9 +73,10 @@ show_sun: true
 show_times: true
 show_moon: true
 show_hours: true
+show_twilight: true
 ```
 
-All four toggles default on. The visual editor has the same switches.
+The toggles default on. The visual editor has the same switches.
 
 | Toggle | Draws |
 | --- | --- |
@@ -83,3 +84,4 @@ All four toggles default on. The visual editor has the same switches.
 | Sunrise and sunset | Those clock times written along the two edges of the wedge |
 | Moon | The two-tone disc on the ring, while the moon is above the horizon |
 | Hour lines | A line at each local hour the sun is up. Noon reaches the centre; every third hour is longer than the hours between |
+| Twilight | A blue-grey wedge from civil dawn to civil dusk, under the daylight |

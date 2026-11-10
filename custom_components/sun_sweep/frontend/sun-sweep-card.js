@@ -12,6 +12,7 @@ const RING_R = 128;
 const PALE = "#f6d84a";
 const STRONG = "#f0b429";
 const HOUR = "#c48a12";
+const TWILIGHT = "#9aafc9";
 const RING = "#111111";
 
 const clockwise = (start, end) => (end - start + 360) % 360;
@@ -113,6 +114,11 @@ class SunSweepCard extends LitElement {
   _picture(attrs) {
     const sunClockwise = attrs.sun_clockwise !== false;
     const parts = [];
+    if (this._on("show_twilight") && attrs.twilight_full) {
+      parts.push(svg`<circle id="twilight" cx="160" cy="160" r=${RIM} fill=${TWILIGHT} fill-opacity="0.55"></circle>`);
+    } else if (this._on("show_twilight") && attrs.twilight_start != null) {
+      parts.push(wedge("twilight", attrs.twilight_start, attrs.twilight_end, RIM, TWILIGHT, 0.55, sunClockwise));
+    }
     if (attrs.pale_full) {
       parts.push(svg`<circle id="pale" cx="160" cy="160" r=${RIM} fill=${PALE} fill-opacity="0.35"></circle>`);
       parts.push(svg`<circle id="rim" cx="160" cy="160" r=${RIM} fill="none" stroke=${HOUR} stroke-width="1.5"></circle>`);
@@ -207,6 +213,7 @@ class SunSweepCardEditor extends LitElement {
       { name: "show_times", selector: { boolean: {} } },
       { name: "show_moon", selector: { boolean: {} } },
       { name: "show_hours", selector: { boolean: {} } },
+      { name: "show_twilight", selector: { boolean: {} } },
     ];
   }
 
@@ -217,6 +224,7 @@ class SunSweepCardEditor extends LitElement {
       show_times: this.config.show_times !== false,
       show_moon: this.config.show_moon !== false,
       show_hours: this.config.show_hours !== false,
+      show_twilight: this.config.show_twilight !== false,
     };
   }
 
@@ -242,6 +250,7 @@ class SunSweepCardEditor extends LitElement {
             show_times: "Sunrise and sunset",
             show_moon: "Moon",
             show_hours: "Hour lines",
+            show_twilight: "Twilight",
           })[item.name]}
         @value-changed=${this._changed}
       ></ha-form>

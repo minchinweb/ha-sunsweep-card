@@ -105,6 +105,15 @@ def test_after_sunset_the_sun_marker_is_hidden_and_the_wedge_remains():
     assert "5:04 AM" in svg
 
 
+def test_twilight_is_drawn_under_the_day_unless_turned_off():
+    wider = {**SUMMER, "twilight_start": 20.0, "twilight_end": 340.0}
+    svg = card_svg(wider)
+    assert svg.index('id="twilight"') < svg.index('id="pale"')
+    hidden = card_svg(wider, {"show_twilight": False})
+    assert 'id="twilight"' not in hidden
+    assert 'id="pale"' in hidden
+
+
 def test_toggles_drop_their_marks():
     svg = card_svg(
         SUMMER,

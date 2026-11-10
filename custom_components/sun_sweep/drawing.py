@@ -23,6 +23,8 @@ from .constants import (
     STRONG,
     STRONG_OPACITY,
     SUN_FILL,
+    TWILIGHT,
+    TWILIGHT_OPACITY,
 )
 from .sweep import travel
 
@@ -70,7 +72,13 @@ def _flags(options: dict | None) -> dict[str, bool]:
     options = options or {}
     return {
         key: options.get(key) is not False
-        for key in ("show_sun", "show_times", "show_moon", "show_hours")
+        for key in (
+            "show_sun",
+            "show_times",
+            "show_moon",
+            "show_hours",
+            "show_twilight",
+        )
     }
 
 
@@ -88,6 +96,24 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
     parts: list[str] = []
     rim = _RIM * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
+    if flags["show_twilight"] and attrs.get("twilight_full"):
+        parts.append(
+            f'<circle id="twilight" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '
+            f'fill="{TWILIGHT}" fill-opacity="{TWILIGHT_OPACITY}"/>'
+        )
+    elif flags["show_twilight"] and attrs.get("twilight_start") is not None:
+        parts.append(
+            _wedge(
+                "twilight",
+                attrs["twilight_start"],
+                attrs["twilight_end"],
+                rim,
+                TWILIGHT,
+                TWILIGHT_OPACITY,
+                size,
+                sun_clockwise,
+            )
+        )
     if attrs.get("pale_full"):
         parts.append(
             f'<circle id="pale" cx="{size / 2}" cy="{size / 2}" r="{rim:.1f}" '

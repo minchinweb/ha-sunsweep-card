@@ -39,6 +39,7 @@ as leaving it on.
 | `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written along the two edges of the wedge |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre. 3, 6 and 9 o'clock, and the same every three hours, run further in than the others |
+| `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
 
 A black ring circles the daylight disc, the way a compass draws its edge.
 North is the top of the circle, just inside that ring. The house sits in the middle, scaled so the
@@ -46,7 +47,8 @@ wedge stays visible around it. Noon is drawn across the building to the centre. 
 
 ## How to read the wedge
 
-The pale yellow is every direction the sun passes today, from sunrise to
+Under the yellow, a blue-grey wedge runs from civil dawn to civil dusk. Turn
+it off with `show_twilight: false`. The pale yellow is every direction the sun passes today, from sunrise to
 sunset, in the direction the sun actually travels. North of the equator that
 is clockwise through south. South of the equator it is the other way, through
 north. A stronger yellow covers the part already past: from sunrise up to the

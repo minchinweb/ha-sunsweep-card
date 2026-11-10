@@ -19,6 +19,7 @@ from custom_components.sun_sweep.sweep import (
     moon_position,
     project_outline,
     snapshot,
+    travel,
 )
 
 EDMONTON = ZoneInfo("America/Edmonton")
@@ -49,6 +50,16 @@ def test_the_southern_sun_travels_the_other_way_through_north():
     end = sweep.pale[1]
     # decreasing azimuth: already travelled is clockwise from now back to sunrise
     assert 0 < clockwise(now, rise) < clockwise(end, rise)
+
+
+def test_twilight_reaches_beyond_sunrise_and_sunset():
+    sweep = day_sweep(_at(EDMONTON, 2026, 6, 21, 9, 30), LAT, LON)
+    assert sweep.twilight is not None and sweep.pale is not None
+    dawn, dusk, _ = sweep.twilight
+    rise, sett, _ = sweep.pale
+    assert travel(dawn, rise, True) > 0
+    assert travel(dawn, sett, True) < travel(dawn, dusk, True)
+    assert "twilight_start" in sweep.attributes()
 
 
 def test_before_sunrise_has_no_strong_wedge_and_no_sun():
@@ -86,6 +97,7 @@ def test_polar_day_is_a_full_disc_with_hour_lines():
     assert sweep.strong is not None
     assert len(sweep.hours) == 24
     assert sweep.sun_elevation > 0
+    assert sweep.twilight is None
 
 
 def test_polar_night_has_no_sector_and_no_hour_lines():
@@ -95,6 +107,7 @@ def test_polar_night_has_no_sector_and_no_hour_lines():
     assert sweep.strong is None
     assert sweep.hours == ()
     assert sweep.sun_elevation < 0
+    assert sweep.twilight is None
 
 
 def test_projection_centres_the_box_and_keeps_north_positive():

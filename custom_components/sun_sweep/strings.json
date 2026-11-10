@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Sun Sweep",
-        "description": "Draw today's sun angles around the building outline from House Structure. Nothing else to set: the card on the dashboard chooses the sun, the moon, the times and the hour lines."
+        "description": "Draw today's sun angles around the building outline from House Structure. Nothing else to set: the card on the dashboard chooses the sun, the moon, the times, the hour lines and the twilight."
       }
     },
     "abort": {

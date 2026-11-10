@@ -97,17 +97,22 @@ class Sweep:
     hours: tuple[tuple[datetime, float], ...]
     pale: tuple[float, float, bool] | None
     strong: tuple[float, float, bool] | None
+    # Civil dawn to civil dusk. Wider than the daylight sector.
+    twilight: tuple[float, float, bool] | None
     # True when the sun's azimuth increases through the day (northern sky).
     sun_clockwise: bool
 
     def attributes(self) -> dict:
         """JSON-ready fields for the sensor. ``None`` is left out."""
         pale_start = pale_end = strong_start = strong_end = None
-        pale_full = strong_full = False
+        twilight_start = twilight_end = None
+        pale_full = strong_full = twilight_full = False
         if self.pale is not None:
             pale_start, pale_end, pale_full = self.pale
         if self.strong is not None:
             strong_start, strong_end, strong_full = self.strong
+        if self.twilight is not None:
+            twilight_start, twilight_end, twilight_full = self.twilight
         raw = {
             "sunrise": None if self.sunrise is None else self.sunrise.isoformat(),
             "sunset": None if self.sunset is None else self.sunset.isoformat(),
@@ -132,6 +137,11 @@ class Sweep:
             "strong_start": None if strong_start is None else round(strong_start, 1),
             "strong_end": None if strong_end is None else round(strong_end, 1),
             "strong_full": strong_full,
+            "twilight_start": (
+                None if twilight_start is None else round(twilight_start, 1)
+            ),
+            "twilight_end": None if twilight_end is None else round(twilight_end, 1),
+            "twilight_full": twilight_full,
             "sun_clockwise": self.sun_clockwise,
         }
         return {key: value for key, value in raw.items() if value is not None}
@@ -163,6 +173,8 @@ def day_sweep(when: datetime, latitude: float, longitude: float) -> Sweep:
     rise, sett = times["sunrise"], times["sunset"]
     rise_az = azimuth(observer, rise)
     set_az = azimuth(observer, sett)
+    dawn_az = azimuth(observer, times["dawn"])
+    dusk_az = azimuth(observer, times["dusk"])
     sun_clockwise = _sun_clockwise(observer, rise, rise_az)
     if when < rise:
         phase = BEFORE
@@ -188,6 +200,7 @@ def day_sweep(when: datetime, latitude: float, longitude: float) -> Sweep:
         ),
         pale=(rise_az, set_az, False),
         strong=strong,
+        twilight=(dawn_az, dusk_az, False),
         sun_clockwise=sun_clockwise,
     )
 
@@ -226,6 +239,7 @@ def _polar(when, observer, sun_az, sun_el, moon_az, moon_el) -> Sweep:
             hours=_hours(observer, when, None, None, 0.0, 0.0, True, full=True),
             pale=(0.0, 360.0, True),
             strong=(midnight_az, sun_az, False),
+            twilight=None,
             sun_clockwise=_sun_clockwise(observer, midnight, midnight_az),
         )
     return Sweep(
@@ -241,6 +255,7 @@ def _polar(when, observer, sun_az, sun_el, moon_az, moon_el) -> Sweep:
         hours=(),
         pale=None,
         strong=None,
+        twilight=None,
         sun_clockwise=True,
     )
 

@@ -31,6 +31,7 @@ LAT, LON = 53.5461, -113.4938
 HOUSE = [[-6, -4], [6, -4], [6, 4], [-6, 4]]
 INK = (61, 74, 87, 255)
 PALE = (246, 216, 74, 90)
+TWILIGHT = (154, 175, 201, 140)
 STRONG = (240, 180, 41, 184)
 HOUR = (196, 138, 18, 255)
 RING = (17, 17, 17, 255)
@@ -116,6 +117,20 @@ def paint(attrs: dict, size: int = 640) -> Image.Image:
     draw = ImageDraw.Draw(image, "RGBA")
     rim = 112.0 * size / 320
     sun_clockwise = attrs.get("sun_clockwise", True)
+    if attrs.get("twilight_full"):
+        mid = size / 2
+        draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=TWILIGHT)
+    elif attrs.get("twilight_start") is not None:
+        draw.polygon(
+            _sector(
+                attrs["twilight_start"],
+                attrs["twilight_end"],
+                rim,
+                size,
+                sun_clockwise,
+            ),
+            fill=TWILIGHT,
+        )
     if attrs.get("pale_full"):
         mid = size / 2
         draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=PALE)
