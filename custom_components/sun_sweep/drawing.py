@@ -219,7 +219,13 @@ def _twilight(attrs: dict, ring: float, size: int, sun_clockwise: bool) -> list[
     if attrs.get("pale_start") is None:
         return [
             _wedge(
-                "twilight", start, end, ring, TWILIGHT, TWILIGHT_OPACITY, size,
+                "twilight",
+                start,
+                end,
+                ring,
+                TWILIGHT,
+                TWILIGHT_OPACITY,
+                size,
                 sun_clockwise,
             )
         ]

@@ -1,0 +1,11 @@
+# Keep the uv lock file and the GitHub Actions in the workflows up to date.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

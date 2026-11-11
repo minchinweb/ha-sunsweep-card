@@ -115,8 +115,9 @@ def test_a_failed_fetch_draws_the_square(hass: HomeAssistant) -> None:
 def test_the_outline_status_comes_from_house_structures_sensor(
     hass: HomeAssistant,
 ) -> None:
-    from custom_components.sun_sweep.outline import outline_status
     from homeassistant.helpers import entity_registry as er
+
+    from custom_components.sun_sweep.outline import outline_status
 
     assert outline_status(hass) is None  # not installed
     house = MockConfigEntry(domain="house_structure", data={})

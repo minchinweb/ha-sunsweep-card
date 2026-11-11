@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import importlib.util
 from datetime import datetime
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -75,7 +75,8 @@ def test_frontend_seasons_match_the_reference():
     script = (
         'import { season } from "./custom_components/sun_sweep/frontend/seasons.js";'
         "const out = {};"
-        'for (const y of [2026, 2027]) for (const w of ["march","june","september","december"])'
+        "for (const y of [2026, 2027])"
+        ' for (const w of ["march","june","september","december"])'
         " out[`${y}-${w}`] = season(y, w).toISOString();"
         "console.log(JSON.stringify(out));"
     )
@@ -91,5 +92,5 @@ def test_frontend_seasons_match_the_reference():
     for key, value in found.items():
         year, which = key.split("-")
         expected = season(int(year), which)
-        got = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        got = datetime.fromisoformat(value)
         assert abs((got - expected).total_seconds()) < 1

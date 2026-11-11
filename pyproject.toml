@@ -74,6 +74,11 @@ extend-select = [
   "YTT",    # flake8-2020 (common issues with Python version checks)
 ]
 
+# Rules turned off on purpose (keep each with a reason; see STYLE.md F3)
+ignore = [
+  "SIM108", # prefer a plain if/else block over a ternary (reads better)
+]
+
 [tool.ruff.lint.flake8-copyright]
 # `notice-rgx` is ruff's default, written out. A notice looks like
 # `Copyright (c) 2026 Name`; add `author` to require a particular name.
