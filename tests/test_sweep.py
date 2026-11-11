@@ -211,3 +211,18 @@ def test_the_moon_is_a_direction_on_the_sky():
     azimuth, elevation = moon_position(_at(EDMONTON, 2026, 6, 21, 9, 30), LAT, LON)
     assert 0 <= azimuth < 360
     assert -90 <= elevation <= 90
+
+
+def test_the_outline_status_says_why_the_building_is_missing():
+    when = _at(EDMONTON, 2026, 6, 21, 9, 30)
+    for status in ("not_found", "failed", "not_loaded"):
+        attrs = finish_snapshot(
+            when, LAT, LON, [], house_structure=True, outline_status=status
+        )
+        assert attrs["outline_status"] == status
+    attrs = finish_snapshot(
+        when, LAT, LON, [], house_structure=True, outline_status="found"
+    )
+    assert "outline_status" not in attrs  # found, yet no ring: not a reason
+    attrs = finish_snapshot(when, LAT, LON, [], house_structure=True)
+    assert "outline_status" not in attrs

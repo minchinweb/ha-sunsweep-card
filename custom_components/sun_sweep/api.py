@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant
 import voluptuous as vol
 
 from .constants import HOUSE_STRUCTURE, OUTLINE_DATA
+from .outline import outline_status
 from .sweep import finish_snapshot, resolve_when
 
 
@@ -26,6 +27,7 @@ async def ws_snapshot(hass: HomeAssistant, connection, msg: dict) -> None:
     """The sweep at a date, using the home location and the saved outline."""
 
     installed = bool(hass.config_entries.async_entries(HOUSE_STRUCTURE))
+    status = outline_status(hass)
 
     def build() -> dict:
         now = datetime.now(ZoneInfo(hass.config.time_zone))
@@ -38,6 +40,7 @@ async def ws_snapshot(hass: HomeAssistant, connection, msg: dict) -> None:
             hass.config.longitude,
             points,
             house_structure=installed,
+            outline_status=status,
         )
 
     try:

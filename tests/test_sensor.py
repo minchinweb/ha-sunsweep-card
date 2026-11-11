@@ -110,3 +110,26 @@ def test_a_failed_fetch_draws_the_square(hass: HomeAssistant) -> None:
     attrs = SunSweepCoordinator(hass, entry)._read(when, True)
     assert attrs["outline"][0] == [-5.0, -5.0]
     assert attrs["outline_missing"] is True
+
+
+def test_the_outline_status_comes_from_house_structures_sensor(
+    hass: HomeAssistant,
+) -> None:
+    from custom_components.sun_sweep.outline import outline_status
+    from homeassistant.helpers import entity_registry as er
+
+    assert outline_status(hass) is None  # not installed
+    house = MockConfigEntry(domain="house_structure", data={})
+    house.add_to_hass(hass)
+    assert outline_status(hass) is None  # no sensor (an older House Structure)
+    entity = er.async_get(hass).async_get_or_create(
+        "sensor",
+        "house_structure",
+        f"{house.entry_id}_outline",
+        suggested_object_id="house_outline",
+    )
+    assert outline_status(hass) is None  # no state yet
+    hass.states.async_set(entity.entity_id, "failed")
+    assert outline_status(hass) == "failed"
+    hass.states.async_set(entity.entity_id, "unavailable")
+    assert outline_status(hass) is None

@@ -94,7 +94,9 @@ copied into the card.
 The card says **Sun Sweep is not set up** when the sensor is not there.
 With no building outline it draws the square. While you add or edit the
 card, a note underneath says whether House Structure is missing or has not
-found a building yet. On the live dashboard that note is hidden. A
+found a building yet. When House Structure is recent enough to have its
+**Building outline** sensor, the note says why: OpenStreetMap could not be
+reached, or has no building at your home location. On the live dashboard that note is hidden. A
 restart picks up an outline House Structure has already saved. House
 Structure fetches again when the home coordinates change, and Sun Sweep
 reads the new ring within a minute. The card appears in the dashboard

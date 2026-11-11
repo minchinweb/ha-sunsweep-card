@@ -14,6 +14,14 @@ const DOCS =
 const SHOW = ["show_sun", "show_times", "show_moon", "show_hours", "show_twilight"];
 // The four named days. The value is what goes in `date`. `north` and `south`
 // are what the day is called in each hemisphere.
+// Why House Structure has no outline, by its Building outline sensor's state.
+const OUTLINE_WHY = {
+  failed: "House Structure could not reach OpenStreetMap for the building outline",
+  not_found: "OpenStreetMap has no building at your home location",
+  not_loaded: "House Structure has not looked up the building outline yet",
+  default: "House Structure has no building outline for this home yet",
+};
+
 const DAYS = [
   { value: "march-equinox", month: "march", north: "Vernal equinox", south: "Autumnal equinox" },
   { value: "june-solstice", month: "june", north: "Summer solstice", south: "Winter solstice" },
@@ -381,9 +389,7 @@ class SunSweepCard extends LitElement {
       notes.push("House Structure is not installed, so this is a plain square.");
     }
     if (setup && !waiting && attrs?.outline_missing) {
-      notes.push(
-        "House Structure has no building outline for this home yet, so this is a plain square.",
-      );
+      notes.push(`${OUTLINE_WHY[attrs.outline_status] ?? OUTLINE_WHY.default}, so this is a plain square.`);
     }
     if (!waiting && attrs?.phase === "polar_night") {
       notes.push("The sun stays below the horizon today.");

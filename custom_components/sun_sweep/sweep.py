@@ -321,11 +321,14 @@ def finish_snapshot(
     points: list | None,
     *,
     house_structure: bool,
+    outline_status: str | None = None,
 ) -> dict:
     """Sensor attributes, with a square standing in when there is no outline.
 
     ``outline_fallback`` means House Structure is not installed.
-    ``outline_missing`` means it is installed but has no building yet.
+    ``outline_missing`` means it is installed but has no building yet, and
+    ``outline_status`` (when House Structure says) gives why: ``not_found``,
+    ``failed`` or ``not_loaded``.
     ``points`` are latitude/longitude corners.
     """
     attrs = snapshot(when, latitude, longitude, points if house_structure else None)
@@ -334,6 +337,8 @@ def finish_snapshot(
     attrs["outline"] = [list(corner) for corner in SQUARE]
     if house_structure:
         attrs["outline_missing"] = True
+        if outline_status in ("not_found", "failed", "not_loaded"):
+            attrs["outline_status"] = outline_status
     else:
         attrs["outline_fallback"] = True
     return attrs
