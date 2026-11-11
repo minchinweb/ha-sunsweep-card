@@ -119,3 +119,11 @@ keeps the card on the live clock. The visual editor has the same controls.
 | Rotation | Degrees clockwise to turn the whole card. North stays the geographic north of the drawing |
 | Date and time | Pin the drawing to `YYYY-MM-DD`, an equinox (`march-equinox`, `september-equinox`), or a solstice (`june-solstice`, `december-solstice`), and an optional `HH:MM`. `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere. The sensor stays on the live clock. The card says which day it is holding |
 | Tap action | What a tap does. The default, `none`, leaves the picture alone |
+
+## Development
+
+The card imports Lit from `custom_components/sun_sweep/frontend/lit.js`, a
+generated bundle (a browser cannot resolve a bare `"lit"`). After changing the
+Lit version in `package.json`, run `npm install && npm run build` and commit
+the new `lit.js`. When the card script itself changes, bump the `?v=` on
+`CARD_URL` in `constants.py` so browsers drop the cached copy.

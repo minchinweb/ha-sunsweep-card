@@ -1,0 +1,13 @@
+{
+  "name": "ha-sunsweep-card-build",
+  "private": true,
+  "description": "Build tooling only. The shipped card lives in custom_components/sun_sweep/frontend.",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild scripts/lit-entry.js --bundle --minify --format=esm --legal-comments=none --outfile=custom_components/sun_sweep/frontend/lit.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "lit": "3.3.1"
+  }
+}
