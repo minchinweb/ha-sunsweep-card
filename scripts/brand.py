@@ -27,12 +27,22 @@ FONT = ROOT / "brand" / "fonts" / "Figtree-Variable.ttf"
 BRAND = ROOT / "custom_components" / "sun_sweep" / "brand"
 SOURCES = ROOT / "brand"
 
-PALE = (246, 216, 74, 90)
-STRONG = (240, 180, 41, 184)
+# The day's whole arc stays faint so the swept part (sunrise to now) stands
+# clear of it: over 2:1 on white and on a dark dashboard. The swept amber is
+# deeper than the card's, which also sets the sun disc apart from it.
+PALE_OPACITY = 0.3
+PALE = (246, 216, 74, round(255 * PALE_OPACITY))
+STRONG_HEX = "#d4900a"
+STRONG = (212, 144, 10, 255)
 SUN = (245, 196, 0, 255)
 SUN_EDGE = (165, 107, 0, 255)
 RING = (17, 17, 17, 255)
 RING_HALO = (255, 255, 255, 255)
+# On a dark dashboard a black ring vanishes, so the two swap.
+DARK_RING = (244, 247, 251, 255)
+DARK_RING_HALO = (17, 17, 17, 255)
+# The sun is a sixth of the radius, plus a tenth so it holds up when small.
+SUN_SIZE = 1 / 5.45
 
 # A northern summer day: sunrise in the north-east, sun mid-morning, sunset north-west.
 RISE, NOW, SET = 48.0, 108.0, 314.0
@@ -69,6 +79,37 @@ def _house(centre: float, rim: float) -> list[tuple[float, float]]:
     return [(centre + east * scale, centre - north * scale) for east, north in corners]
 
 
+def _offset(
+    points: list[tuple[float, float]], distance: float
+) -> list[tuple[float, float]]:
+    """Mitre a plan out by ``distance`` (in by when negative).
+
+    Every corner of the plan is a right angle, so each moves along the
+    diagonal between its two edge normals.
+    """
+    count = len(points)
+    area = sum(
+        points[i][0] * points[(i + 1) % count][1]
+        - points[(i + 1) % count][0] * points[i][1]
+        for i in range(count)
+    )
+    # Screen y points down, so a positive sum winds clockwise on screen.
+    side = 1.0 if area > 0 else -1.0
+    moved = []
+    for i, (x, y) in enumerate(points):
+        before = points[i - 1]
+        after = points[(i + 1) % count]
+        shift_x = shift_y = 0.0
+        for start, end in ((before, (x, y)), ((x, y), after)):
+            run_x, run_y = end[0] - start[0], end[1] - start[1]
+            length = math.hypot(run_x, run_y)
+            # Outward normal of a clockwise edge on screen is (dy, -dx).
+            shift_x += side * run_y / length
+            shift_y += -side * run_x / length
+        moved.append((x + shift_x * distance, y + shift_y * distance))
+    return moved
+
+
 def _weights(rim: float) -> tuple[int, int, int]:
     """Ring, a slim light edge, and a house stroke heavier than the ring.
 
@@ -87,21 +128,27 @@ def draw_mark(image: Image.Image, centre: float, rim: float, dark: bool) -> None
     draw.polygon(_sector(RISE, SET, rim, centre), fill=PALE)
     draw.polygon(_sector(RISE, NOW, rim, centre), fill=STRONG)
     ring, halo, house_width = _weights(rim)
-    disc = (centre - rim, centre - rim, centre + rim, centre + rim)
-    draw.ellipse(disc, outline=RING_HALO, width=halo)
-    draw.ellipse(disc, outline=RING, width=ring)
+    # Pillow draws an outline inward from its box, but the ring is centred on
+    # the radius (as in the SVG), which is where the sun rides.
+    for width, colour in (
+        (halo, DARK_RING_HALO if dark else RING_HALO),
+        (ring, DARK_RING if dark else RING),
+    ):
+        reach = rim + width / 2
+        draw.ellipse(
+            (centre - reach, centre - reach, centre + reach, centre + reach),
+            outline=colour,
+            width=width,
+        )
     house = _house(centre, rim)
     fill = (36, 48, 64, 255) if dark else (247, 244, 239, 255)
     edge = (244, 247, 251, 255) if dark else (61, 74, 87, 255)
-    draw.polygon(house, fill=fill)
-    # The stroke starts and ends on the lower-left corner. A disc on every
-    # corner closes that joint; the line alone leaves it half open.
-    draw.line([*house, house[0]], fill=edge, width=house_width, joint="curve")
-    cap = house_width / 2
-    for x, y in house:
-        draw.ellipse((x - cap, y - cap, x + cap, y + cap), fill=edge)
+    # Square corners: the wall is a mitred band half a stroke either side of
+    # the plan, so every corner is a hard right angle, the closing one too.
+    draw.polygon(_offset(house, house_width / 2), fill=edge)
+    draw.polygon(_offset(house, -house_width / 2), fill=fill)
     sun = _at(NOW, rim, centre)
-    radius = max(6, round(rim / 6))
+    radius = max(6, round(rim * SUN_SIZE))
     draw.ellipse(
         (sun[0] - radius, sun[1] - radius, sun[0] + radius, sun[1] + radius),
         fill=SUN,
@@ -181,7 +228,9 @@ def _svg(dark: bool) -> str:
     centre, rim = 256.0, 184.0
     sun = _at(NOW, rim, centre)
     ring, halo, house_width = _weights(rim)
-    sun_r = max(6, round(rim / 6))
+    sun_r = max(6, round(rim * SUN_SIZE))
+    ring_colour = "#f4f7fb" if dark else "#111111"
+    halo_colour = "#111111" if dark else "#ffffff"
     outer = rim + halo / 2
     points = [
         *_sector(RISE, SET, rim, centre),
@@ -208,13 +257,16 @@ def _svg(dark: bool) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{left:.1f} {top:.1f} '
         f'{right - left:.1f} {bottom - top:.1f}">'
-        f'<polygon points="{sector(RISE, SET)}" fill="#f6d84a" fill-opacity="0.35"/>'
-        f'<polygon points="{sector(RISE, NOW)}" fill="#f0b429" fill-opacity="0.72"/>'
+        f'<polygon points="{sector(RISE, SET)}" fill="#f6d84a" '
+        f'fill-opacity="{PALE_OPACITY}"/>'
+        f'<polygon points="{sector(RISE, NOW)}" fill="{STRONG_HEX}" '
+        f'fill-opacity="1"/>'
         f'<circle cx="{centre:.1f}" cy="{centre:.1f}" r="{rim:.1f}" fill="none" '
-        f'stroke="#ffffff" stroke-width="{halo}"/>'
+        f'stroke="{halo_colour}" stroke-width="{halo}"/>'
         f'<circle cx="{centre:.1f}" cy="{centre:.1f}" r="{rim:.1f}" fill="none" '
-        f'stroke="#111111" stroke-width="{ring}"/>'
+        f'stroke="{ring_colour}" stroke-width="{ring}"/>'
         f'<polygon points="{house}" fill="{fill}" stroke="{edge}" '
+        f'stroke-linejoin="miter" '
         f'stroke-width="{house_width}"/>'
         f'<circle cx="{sun[0]:.1f}" cy="{sun[1]:.1f}" r="{sun_r}" fill="#f5c400" '
         f'stroke="#a56b00" stroke-width="6"/></svg>\n'
