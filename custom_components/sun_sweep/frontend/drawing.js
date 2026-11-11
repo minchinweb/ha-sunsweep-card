@@ -24,6 +24,7 @@ const INK =
   'fill="var(--primary-text-color)" stroke="var(--ha-card-background, var(--card-background-color, #ffffff))" stroke-width="3" paint-order="stroke"';
 const TITLE = {
   twilight: "Civil twilight",
+  "twilight-dusk": "Civil twilight",
   pale: "Where the sun travels today",
   strong: "Sunlight already past",
 };
@@ -74,22 +75,7 @@ function parts(attrs, options, size) {
   const out = [];
   const ring = (RING_R * size) / SIZE;
   const sunClockwise = attrs.sun_clockwise !== false;
-  if (on(options, "show_twilight") && attrs.twilight_full) {
-    out.push(filled("twilight", ring, TWILIGHT, TWILIGHT_OPACITY, size));
-  } else if (on(options, "show_twilight") && attrs.twilight_start != null) {
-    out.push(
-      wedge(
-        "twilight",
-        attrs.twilight_start,
-        attrs.twilight_end,
-        ring,
-        TWILIGHT,
-        TWILIGHT_OPACITY,
-        size,
-        sunClockwise,
-      ),
-    );
-  }
+  if (on(options, "show_twilight")) out.push(...twilight(attrs, ring, size, sunClockwise));
   if (attrs.pale_full) {
     out.push(filled("pale", ring, PALE, PALE_OPACITY, size));
     const mid = one(size / 2);
@@ -164,6 +150,27 @@ function parts(attrs, options, size) {
     `<text id="north" x="${one(nx)}" y="${one(ny + 4)}" text-anchor="middle" ${INK}>N</text>`,
   );
   return out;
+}
+
+// The twilight on the two ends of the day, and none over the daylight: the
+// sensor's twilight runs dawn to dusk, so drawing all of it would darken the
+// pale wedge.
+function twilight(attrs, ring, size, sunClockwise) {
+  if (attrs.twilight_full && attrs.pale_start == null) {
+    return [filled("twilight", ring, TWILIGHT, TWILIGHT_OPACITY, size)];
+  }
+  const start = attrs.twilight_start;
+  const end = attrs.twilight_end;
+  if (start == null || end == null) return [];
+  const draw = (name, a, b) =>
+    wedge(name, a, b, ring, TWILIGHT, TWILIGHT_OPACITY, size, sunClockwise);
+  if (attrs.pale_start == null) return [draw("twilight", start, end)];
+  return [
+    ["twilight", start, attrs.pale_start],
+    ["twilight-dusk", attrs.pale_end, end],
+  ]
+    .filter(([, a, b]) => travel(a, b, sunClockwise) > 0.05)
+    .map(([name, a, b]) => draw(name, a, b));
 }
 
 function hourInner(clock, houseRadius, rim, size) {

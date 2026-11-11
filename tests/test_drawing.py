@@ -128,6 +128,22 @@ def test_twilight_is_drawn_under_the_day_unless_turned_off():
     assert 'id="pale"' in hidden
 
 
+def test_twilight_is_only_on_the_two_ends_of_the_day():
+    wider = {**SUMMER, "twilight_start": 20.0, "twilight_end": 340.0}
+    svg = card_svg(wider)
+    assert svg.count("<title>Civil twilight</title>") == 2
+    assert 'id="twilight"' in svg and 'id="twilight-dusk"' in svg
+    # dawn to sunrise, and sunset to dusk: nothing between 46.5 and 313.5
+    dawn = svg[svg.index('id="twilight"') :].split("</path>")[0]
+    dusk = svg[svg.index('id="twilight-dusk"') :].split("</path>")[0]
+    x, y = point_at(20.0, 128.0)
+    assert f"L {x:.1f} {y:.1f}" in dawn
+    x, y = point_at(46.5, 128.0)
+    assert f"{x:.1f} {y:.1f} Z" in dawn
+    x, y = point_at(313.5, 128.0)
+    assert f"L {x:.1f} {y:.1f}" in dusk
+
+
 def test_toggles_drop_their_marks():
     svg = card_svg(
         SUMMER,

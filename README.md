@@ -122,8 +122,8 @@ keeps the card on the live clock. The visual editor has the same controls.
 | Sunrise and sunset | Those clock times written along the two edges of the wedge |
 | Moon | The two-tone disc on the ring, while the moon is above the horizon |
 | Hour lines | A line at each local hour the sun is up. Noon reaches the centre, and every third hour is longer, but the house covers whatever falls inside the walls |
-| Twilight | A blue-grey wedge from civil dawn to civil dusk, under the daylight |
-| Rotation | Degrees clockwise to turn the whole card. North stays the geographic north of the drawing |
+| Twilight | A blue-grey wedge on each end of the day: civil dawn to sunrise, and sunset to civil dusk |
+| Rotation | Degrees clockwise to turn the whole card, or negative for anticlockwise. North stays the geographic north of the drawing |
 | Date and time | Pin the drawing to `YYYY-MM-DD`, an equinox (`march-equinox`, `september-equinox`), or a solstice (`june-solstice`, `december-solstice`), and an optional `HH:MM`. `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere. The sensor stays on the live clock. The card says which day it is holding |
 | Tap action | What a tap does. The default, `none`, leaves the picture alone |
 

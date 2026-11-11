@@ -43,8 +43,8 @@ as leaving it on.
 | `show_times` | on | Sunrise and sunset, in your Home Assistant time format, written just outside the two edges of the wedge, with each edge as the baseline |
 | `show_moon` | on | A two-tone disc centred on the black ring at the moon's bearing, only while the moon is above the horizon |
 | `show_hours` | on | A line through the wedge at each local hour the sun is up. Noon runs to the centre and is drawn heavier than the three-hour lines. Every third hour runs further in. The house is drawn on top, so the lines stop at the walls and noon still reads as the heavy spoke |
-| `show_twilight` | on | A blue-grey wedge from civil dawn to civil dusk, drawn under the daylight. What shows is the twilight on either side of the day |
-| `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways. The editor uses a slider |
+| `show_twilight` | on | A blue-grey wedge on each side of the day: civil dawn to sunrise, and sunset to civil dusk. The daylight keeps its own colour |
+| `rotation` | `0` | Degrees clockwise to turn the whole card. `0` keeps north at the top. Useful when a tablet is mounted sideways. Negative turns anticlockwise. The editor's slider runs from -360 to 360, and YAML takes any number |
 | `date` | | Pin the card to `YYYY-MM-DD`, a full ISO datetime, `march-equinox`, `june-solstice`, `september-equinox`, or `december-solstice` (this year, at home). `spring`, `summer`, `autumn`, and `winter` follow the home hemisphere: summer is June in the north and December in the south. The sensor itself stays live. Leave this out for today. While a date is set, the card says which day it is holding |
 | `time` | | `HH:MM` on that date. Without it, the card uses the current clock time on the chosen day. The editor shows this once a date is set, and hides it when that date already includes a time |
 | `tap_action` | none | What a tap does. `more-info`, `navigate`, `url`, `toggle`, `perform-action`, or `none`. None leaves the picture alone |
@@ -55,7 +55,8 @@ wedge stays visible around it. Noon and every third hour are drawn further in th
 
 ## How to read the wedge
 
-Under the yellow, a blue-grey wedge runs from civil dawn to civil dusk. Turn
+Either side of the yellow, a blue-grey wedge runs from civil dawn to
+sunrise and from sunset to civil dusk. Turn
 it off with `show_twilight: false`. The pale yellow is every direction the sun passes today, from sunrise to
 sunset, in the direction the sun actually travels. North of the equator that
 is clockwise through south. South of the equator it is the other way, through

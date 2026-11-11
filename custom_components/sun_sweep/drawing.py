@@ -40,6 +40,7 @@ _INK = (
 )
 _TITLE = {
     "twilight": "Civil twilight",
+    "twilight-dusk": "Civil twilight",
     "pale": "Where the sun travels today",
     "strong": "Sunlight already past",
 }
@@ -118,21 +119,8 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
     parts: list[str] = []
     ring = _RING * size / SIZE
     sun_clockwise = attrs.get("sun_clockwise", True)
-    if flags["show_twilight"] and attrs.get("twilight_full"):
-        parts.append(_filled("twilight", ring, TWILIGHT, TWILIGHT_OPACITY, size))
-    elif flags["show_twilight"] and attrs.get("twilight_start") is not None:
-        parts.append(
-            _wedge(
-                "twilight",
-                attrs["twilight_start"],
-                attrs["twilight_end"],
-                ring,
-                TWILIGHT,
-                TWILIGHT_OPACITY,
-                size,
-                sun_clockwise,
-            )
-        )
+    if flags["show_twilight"]:
+        parts.extend(_twilight(attrs, ring, size, sun_clockwise))
     if attrs.get("pale_full"):
         parts.append(_filled("pale", ring, PALE, PALE_OPACITY, size))
         parts.append(
@@ -214,6 +202,36 @@ def _parts(attrs: dict, flags: dict[str, bool], size: int) -> list[str]:
         f"{_INK}>N</text>"
     )
     return parts
+
+
+def _twilight(attrs: dict, ring: float, size: int, sun_clockwise: bool) -> list[str]:
+    """The twilight on the two ends of the day, and none over the daylight.
+
+    The sensor's twilight runs from civil dawn to civil dusk, which includes
+    the day. Drawing all of it would darken the pale wedge, so only the part
+    from dawn to sunrise and the part from sunset to dusk are drawn.
+    """
+    if attrs.get("twilight_full") and attrs.get("pale_start") is None:
+        return [_filled("twilight", ring, TWILIGHT, TWILIGHT_OPACITY, size)]
+    start, end = attrs.get("twilight_start"), attrs.get("twilight_end")
+    if start is None or end is None:
+        return []
+    if attrs.get("pale_start") is None:
+        return [
+            _wedge(
+                "twilight", start, end, ring, TWILIGHT, TWILIGHT_OPACITY, size,
+                sun_clockwise,
+            )
+        ]
+    ends = (
+        ("twilight", start, attrs["pale_start"]),
+        ("twilight-dusk", attrs["pale_end"], end),
+    )
+    return [
+        _wedge(name, a, b, ring, TWILIGHT, TWILIGHT_OPACITY, size, sun_clockwise)
+        for name, a, b in ends
+        if travel(a, b, sun_clockwise) > 0.05
+    ]
 
 
 def _hour_inner(clock: str, house_radius: float, rim: float, size: int) -> float:

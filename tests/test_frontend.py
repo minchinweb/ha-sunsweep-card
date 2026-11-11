@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+from datetime import datetime
 import json
 from pathlib import Path
 import subprocess
@@ -66,3 +67,29 @@ def _node_svg(attrs: dict, options: dict | None) -> str:
     )
     assert completed.returncode == 0, completed.stderr
     return completed.stdout
+
+
+def test_frontend_seasons_match_the_reference():
+    from custom_components.sun_sweep.sweep import season
+
+    script = (
+        'import { season } from "./custom_components/sun_sweep/frontend/seasons.js";'
+        "const out = {};"
+        'for (const y of [2026, 2027]) for (const w of ["march","june","september","december"])'
+        " out[`${y}-${w}`] = season(y, w).toISOString();"
+        "console.log(JSON.stringify(out));"
+    )
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=ROOT,
+    )
+    assert completed.returncode == 0, completed.stderr
+    found = json.loads(completed.stdout)
+    for key, value in found.items():
+        year, which = key.split("-")
+        expected = season(int(year), which)
+        got = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        assert abs((got - expected).total_seconds()) < 1

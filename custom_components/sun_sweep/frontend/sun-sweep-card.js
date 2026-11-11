@@ -7,27 +7,48 @@
 import { LitElement, css, html, nothing } from "./lit.js";
 
 import { cardSvg } from "./drawing.js";
+import { season } from "./seasons.js";
 
 const DOCS =
   "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md";
 const SHOW = ["show_sun", "show_times", "show_moon", "show_hours", "show_twilight"];
-const OCCASIONS = [
-  ["march-equinox", "March equinox"],
-  ["june-solstice", "June solstice"],
-  ["september-equinox", "September equinox"],
-  ["december-solstice", "December solstice"],
-  ["spring", "Spring"],
-  ["summer", "Summer"],
-  ["autumn", "Autumn"],
-  ["winter", "Winter"],
-  ["vernal-equinox", "Vernal equinox"],
-  ["spring-equinox", "Spring equinox"],
-  ["summer-solstice", "Summer solstice"],
-  ["autumnal-equinox", "Autumnal equinox"],
-  ["autumn-equinox", "Autumn equinox"],
-  ["fall-equinox", "Fall equinox"],
-  ["winter-solstice", "Winter solstice"],
+// The four named days. The value is what goes in `date`. `north` and `south`
+// are what the day is called in each hemisphere.
+const DAYS = [
+  { value: "march-equinox", month: "march", north: "Vernal equinox", south: "Autumnal equinox" },
+  { value: "june-solstice", month: "june", north: "Summer solstice", south: "Winter solstice" },
+  { value: "september-equinox", month: "september", north: "Autumnal equinox", south: "Vernal equinox" },
+  { value: "december-solstice", month: "december", north: "Winter solstice", south: "Summer solstice" },
 ];
+// Other spellings that `date` accepts, shown as the day they stand for.
+const ALIASES = {
+  north: {
+    "vernal-equinox": "march-equinox",
+    "spring-equinox": "march-equinox",
+    spring: "march-equinox",
+    "summer-solstice": "june-solstice",
+    summer: "june-solstice",
+    "autumnal-equinox": "september-equinox",
+    "autumn-equinox": "september-equinox",
+    "fall-equinox": "september-equinox",
+    autumn: "september-equinox",
+    "winter-solstice": "december-solstice",
+    winter: "december-solstice",
+  },
+  south: {
+    "vernal-equinox": "september-equinox",
+    "spring-equinox": "september-equinox",
+    spring: "september-equinox",
+    "summer-solstice": "december-solstice",
+    summer: "december-solstice",
+    "autumnal-equinox": "march-equinox",
+    "autumn-equinox": "march-equinox",
+    "fall-equinox": "march-equinox",
+    autumn: "march-equinox",
+    "winter-solstice": "june-solstice",
+    winter: "june-solstice",
+  },
+};
 const LABELS = {
   entity: "Entity",
   show_sun: "Sun",
@@ -48,8 +69,9 @@ const HELP = {
   show_moon: "The grey disc on the ring, while the moon is up.",
   show_hours: "A line for each hour the sun is up. Noon is the heavy spoke.",
   show_twilight: "Blue-grey from civil dawn to civil dusk, under the daylight.",
-  rotation: "Degrees clockwise. North turns with the house, for a tablet mounted sideways.",
-  occasion: "Live follows the clock. A named day stays on that equinox or solstice.",
+  rotation:
+    "Degrees clockwise, or negative for anticlockwise. North turns with the house, for a tablet mounted sideways.",
+  occasion: "Live follows the clock. An equinox or solstice holds the card on that day.",
   date: "The day to hold. The sensor itself stays on the live clock.",
   time: "Clock time on the chosen day. Empty uses the time it is now.",
   tap_action: "What a tap on the card does. None leaves the picture alone.",
@@ -397,8 +419,27 @@ class SunSweepCardEditor extends LitElement {
     const date = String(this.config?.date || "").trim();
     if (!date) return "live";
     const key = date.toLowerCase().replaceAll(" ", "-");
-    if (OCCASIONS.some(([value]) => value === key)) return key;
-    return "date";
+    if (DAYS.some(({ value }) => value === key)) return key;
+    const alias = ALIASES[this._south() ? "south" : "north"][key];
+    return alias || "date";
+  }
+
+  _south() {
+    return Number(this.hass?.config?.latitude) < 0;
+  }
+
+  // "Vernal equinox (March 20)": named for the home hemisphere, dated this year.
+  _dayLabel(day) {
+    const language = this.hass?.locale?.language;
+    const timeZone = this.hass?.config?.time_zone;
+    const name = this._south() ? day.south : day.north;
+    try {
+      const when = season(new Date().getFullYear(), day.month);
+      const date = when.toLocaleDateString(language, { timeZone, month: "long", day: "numeric" });
+      return `${name} (${date})`;
+    } catch {
+      return name;
+    }
   }
 
   _schema() {
@@ -407,14 +448,10 @@ class SunSweepCardEditor extends LitElement {
       ...SHOW.map((name) => ({ name, selector: { boolean: {} } })),
       {
         name: "rotation",
+        // The slider's own number field warns outside min and max, so the
+        // range covers a full turn each way: negative is anticlockwise.
         selector: {
-          number: {
-            min: -180,
-            max: 180,
-            step: 1,
-            mode: "slider",
-            unit_of_measurement: "°",
-          },
+          number: { min: -360, max: 360, step: 1, mode: "slider", unit_of_measurement: "°" },
         },
       },
       {
@@ -425,7 +462,7 @@ class SunSweepCardEditor extends LitElement {
             options: [
               { value: "live", label: "Live clock" },
               { value: "date", label: "A chosen date" },
-              ...OCCASIONS.map(([value, label]) => ({ value, label })),
+              ...DAYS.map((day) => ({ value: day.value, label: this._dayLabel(day) })),
             ],
           },
         },
@@ -480,7 +517,8 @@ class SunSweepCardEditor extends LitElement {
     for (const key of SHOW) {
       if (incoming[key] === false) next[key] = false;
     }
-    if (incoming.rotation) next.rotation = incoming.rotation;
+    const turn = Number(incoming.rotation);
+    if (turn) next.rotation = turn;
     const occasion = incoming.occasion || "live";
     if (occasion === "date") {
       if (incoming.date) next.date = incoming.date;

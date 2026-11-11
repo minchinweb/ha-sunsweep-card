@@ -144,16 +144,16 @@ def paint(attrs: dict, size: int = 640, options: dict | None = None) -> Image.Im
         mid = size / 2
         draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=TWILIGHT)
     elif attrs.get("twilight_start") is not None:
-        draw.polygon(
-            _sector(
-                attrs["twilight_start"],
-                attrs["twilight_end"],
-                rim,
-                size,
-                sun_clockwise,
-            ),
-            fill=TWILIGHT,
-        )
+        # Only the two ends of the day, so the pale wedge is not darkened.
+        if attrs.get("pale_start") is None:
+            ends = [(attrs["twilight_start"], attrs["twilight_end"])]
+        else:
+            ends = [
+                (attrs["twilight_start"], attrs["pale_start"]),
+                (attrs["pale_end"], attrs["twilight_end"]),
+            ]
+        for start, end in ends:
+            draw.polygon(_sector(start, end, rim, size, sun_clockwise), fill=TWILIGHT)
     if attrs.get("pale_full"):
         mid = size / 2
         draw.ellipse((mid - rim, mid - rim, mid + rim, mid + rim), fill=PALE)
