@@ -423,7 +423,9 @@ class SunSweepCardEditor extends LitElement {
 
   _occasion() {
     const date = String(this.config?.date || "").trim();
-    if (!date) return "live";
+    // "A chosen date" has no date in the config until one is picked, so the
+    // editor remembers the choice itself to show the pickers.
+    if (!date) return this._pick === "date" ? "date" : "live";
     const key = date.toLowerCase().replaceAll(" ", "-");
     if (DAYS.some(({ value }) => value === key)) return key;
     const alias = ALIASES[this._south() ? "south" : "north"][key];
@@ -480,7 +482,7 @@ class SunSweepCardEditor extends LitElement {
       fields.push({ name: "date", selector: calendar ? { date: {} } : { text: {} } });
     }
     const chosen = String(this.config?.date || "");
-    if (chosen && !chosen.includes("T")) {
+    if (this._occasion() !== "live" && !chosen.includes("T")) {
       fields.push({ name: "time", selector: { time: {} } });
     }
     fields.push({
@@ -526,6 +528,7 @@ class SunSweepCardEditor extends LitElement {
     const turn = Number(incoming.rotation);
     if (turn) next.rotation = turn;
     const occasion = incoming.occasion || "live";
+    this._pick = occasion;
     if (occasion === "date") {
       if (incoming.date) next.date = incoming.date;
     } else if (occasion !== "live") {
@@ -540,6 +543,7 @@ class SunSweepCardEditor extends LitElement {
     const tap = incoming.tap_action;
     if (tap?.action && tap.action !== "none") next.tap_action = tap;
     this.config = next;
+    this.requestUpdate();
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: next } }));
   }
 

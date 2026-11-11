@@ -16,7 +16,7 @@ OUTLINE_SENSOR = "{}_outline"
 CARD_PATH = "/sun_sweep_static"
 # The query changes when the card script changes, so a browser does not
 # keep a copy that failed to load.
-CARD_URL = f"{CARD_PATH}/sun-sweep-card.js?v=8"
+CARD_URL = f"{CARD_PATH}/sun-sweep-card.js?v=9"
 DOCS = (
     "https://github.com/minchinweb/ha-sunsweep-card/blob/master/docs/configuration.md"
 )
