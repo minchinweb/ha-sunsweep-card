@@ -59,6 +59,9 @@ class SunSweepCard extends LitElement {
   static properties = {
     hass: {},
     config: {},
+    // Set by Home Assistant while the card is being added or edited.
+    editMode: { type: Boolean },
+    preview: { type: Boolean },
     _fixed: { state: true },
     _loading: { state: true },
   };
@@ -349,10 +352,13 @@ class SunSweepCard extends LitElement {
       body = this._picture(attrs);
     }
     const notes = [];
-    if (!waiting && attrs?.outline_fallback) {
+    // The outline notes are setup help, so they show only while the card is
+    // being added or edited, not on a live dashboard.
+    const setup = this.editMode || this.preview;
+    if (setup && !waiting && attrs?.outline_fallback) {
       notes.push("House Structure is not installed, so this is a plain square.");
     }
-    if (!waiting && attrs?.outline_missing) {
+    if (setup && !waiting && attrs?.outline_missing) {
       notes.push(
         "House Structure has no building outline for this home yet, so this is a plain square.",
       );
