@@ -81,6 +81,13 @@ It needs Home Assistant 2025.3 or later, the same as House Structure. Adding
 it creates `sensor.sun_sweep`, plus `Sunrise azimuth` and `Sunset azimuth`
 on the same device. The card reads `sensor.sun_sweep`.
 
+4. Add the card to a dashboard. Sun Sweep registers the card itself, so
+   there is no resource to add by hand. Edit the dashboard, choose **Add
+   card**, and pick **Sun Sweep**. Reload the page if the picker was already
+   open. While you add or edit the card, a note says when it is drawing the
+   plain square because House Structure is missing or has not found your
+   building yet. The note is hidden on the live dashboard.
+
 Setting up the card, and what each toggle does, is in
 [the configuration page](docs/configuration.md). That is the page Home
 Assistant opens from the integration's help view.
@@ -127,3 +134,7 @@ generated bundle (a browser cannot resolve a bare `"lit"`). After changing the
 Lit version in `package.json`, run `npm install && npm run build` and commit
 the new `lit.js`. When the card script itself changes, bump the `?v=` on
 `CARD_URL` in `constants.py` so browsers drop the cached copy.
+
+The logo and the brand images are drawn by `scripts/brand.py`. Run it to
+regenerate `brand/` and `custom_components/sun_sweep/brand/`. The pictures
+above come from `scripts/render_card.py`.
