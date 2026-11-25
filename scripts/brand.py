@@ -139,7 +139,9 @@ def _mark(dark: bool) -> str:
     )
 
 
-def _wordmark(height: float, left: float, centre: float, dark: bool) -> tuple[str, tuple]:
+def _wordmark(
+    height: float, left: float, centre: float, dark: bool
+) -> tuple[str, tuple]:
     """The wordmark as one outlined path, its cap height centred on ``centre``.
 
     Returns the path and its ink bounds (xMin, yMin, xMax, yMax).
