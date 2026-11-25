@@ -1,7 +1,7 @@
 {
   "domain": "sun_sweep",
   "name": "Sun Sweep",
-  "after_dependencies": ["house_structure"],
+  "after_dependencies": ["house_structure", "lovelace"],
   "codeowners": ["@minchinweb"],
   "config_flow": true,
   "dependencies": ["http", "frontend"],

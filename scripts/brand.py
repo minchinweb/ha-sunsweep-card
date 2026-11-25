@@ -135,7 +135,8 @@ def _mark(dark: bool) -> str:
         f'stroke="{tone["edge"]}" stroke-width="{HOUSE_STROKE:.2f}" '
         f'stroke-linejoin="miter"/>'
         f'<circle id="sun" cx="{sun_x:.2f}" cy="{sun_y:.2f}" r="{SUN_RADIUS:.2f}" '
-        f'fill="{SUN_HEX}" stroke="{tone["sun_edge"]}" stroke-width="{SUN_STROKE:.2f}"/>'
+        f'fill="{SUN_HEX}" stroke="{tone["sun_edge"]}" '
+        f'stroke-width="{SUN_STROKE:.2f}"/>'
     )
 
 
